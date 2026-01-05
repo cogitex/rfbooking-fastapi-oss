@@ -61,10 +61,16 @@ class User(Base):
     magic_links = relationship("MagicLink", back_populates="user", cascade="all, delete-orphan")
     bookings = relationship("Booking", back_populates="user", cascade="all, delete-orphan")
     equipment_type_access = relationship(
-        "EquipmentTypeUser", back_populates="user", cascade="all, delete-orphan"
+        "EquipmentTypeUser",
+        foreign_keys="[EquipmentTypeUser.user_id]",
+        back_populates="user",
+        cascade="all, delete-orphan"
     )
     managed_equipment = relationship(
-        "EquipmentManager", back_populates="manager", cascade="all, delete-orphan"
+        "EquipmentManager",
+        foreign_keys="[EquipmentManager.manager_id]",
+        back_populates="manager",
+        cascade="all, delete-orphan"
     )
 
     @property
