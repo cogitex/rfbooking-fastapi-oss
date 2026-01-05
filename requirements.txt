@@ -1,0 +1,42 @@
+# RFBooking FastAPI OSS - Self-hosted Equipment Booking System
+# Copyright (C) 2025 Oleg Tokmakov
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+# Web Framework
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+
+# Database
+sqlalchemy>=2.0.0
+alembic>=1.13.0
+aiosqlite>=0.19.0
+
+# Configuration & Validation
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+pyyaml>=6.0.0
+
+# Templates & Static Files
+jinja2>=3.1.0
+aiofiles>=23.0.0
+
+# HTTP Client
+httpx>=0.26.0
+
+# AI Integration
+ollama>=0.1.0
+
+# Email
+resend>=0.7.0
+
+# Scheduling
+apscheduler>=3.10.0
+
+# Security
+python-jose[cryptography]>=3.3.0
+passlib>=1.7.4
+itsdangerous>=2.1.0
+
+# Utilities
+python-dateutil>=2.8.0

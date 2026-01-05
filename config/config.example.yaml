@@ -1,0 +1,71 @@
+# RFBooking FastAPI OSS Configuration
+# Copyright (C) 2025 Oleg Tokmakov
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Copy this file to config.yaml and modify as needed
+
+# Application settings
+app:
+  name: "RFBooking"
+  secret_key: "change-this-to-a-random-secret-key-at-least-32-characters"
+  debug: false
+  host: "0.0.0.0"
+  port: 8000
+  base_url: "http://localhost:8000"  # Used for magic links
+
+# Admin user (created on first startup)
+admin:
+  email: "admin@example.com"
+  name: "Administrator"
+
+# Organization settings
+organization:
+  name: "My Organization"
+  work_day_start: "08:00"
+  work_day_end: "18:00"
+
+# Database settings
+database:
+  path: "/data/rfbooking.db"  # SQLite database path
+
+# Email settings (optional)
+email:
+  enabled: false  # Set to true to enable email notifications
+  provider: "resend"
+  api_key: ""  # Your Resend API key
+  from_address: "noreply@example.com"
+  from_name: "RFBooking System"
+
+# AI Assistant settings
+ai:
+  enabled: true
+  model: "llama3.1:8b"
+  ollama_host: "http://localhost:11434"
+  max_tokens: 800
+  temperature: 0.1
+
+# Security settings
+security:
+  auth_token_days: 30  # How long auth tokens are valid
+  magic_link_minutes: 15  # How long magic links are valid
+  max_tokens_per_user: 10  # Maximum active sessions per user
+  csrf_enabled: true  # Enable CSRF protection
+
+# Rate limiting
+rate_limit:
+  max_bookings_per_user_per_day: 20
+  max_ai_requests_per_5min: 10
+
+# Booking constraints
+booking:
+  max_duration_days: 30
+  max_description_length: 10240  # 10KB
+  reminder_hours: 24  # Send reminder X hours before booking
+  calibration_reminder_days: 7  # Send calibration reminder X days before
+
+# Cleanup settings
+cleanup:
+  auth_token_retention_days: 7  # Keep expired tokens for X days
+  magic_link_retention_days: 7  # Keep used magic links for X days
+  ai_query_log_retention_days: 7  # Keep AI query logs for X days
+  notification_log_retention_days: 30  # Keep notification logs for X days

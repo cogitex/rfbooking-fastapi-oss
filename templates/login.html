@@ -1,0 +1,130 @@
+<!-- RFBooking FastAPI OSS - Self-hosted Equipment Booking System -->
+<!-- Copyright (C) 2025 Oleg Tokmakov -->
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+{% extends "base.html" %}
+
+{% block title %}Sign In - {{ app_name }}{% endblock %}
+
+{% block body %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Sign in to {{ app_name }}
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Enter your email to receive a magic link
+            </p>
+        </div>
+
+        <form id="login-form" class="mt-8 space-y-6" onsubmit="handleLogin(event)">
+            <div class="rounded-md shadow-sm -space-y-px">
+                <div>
+                    <label for="email" class="sr-only">Email address</label>
+                    <input id="email" name="email" type="email" autocomplete="email" required
+                        class="appearance-none rounded-t-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                        placeholder="Email address">
+                </div>
+                <div>
+                    <label for="name" class="sr-only">Your name</label>
+                    <input id="name" name="name" type="text" autocomplete="name"
+                        class="appearance-none rounded-b-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                        placeholder="Your name (optional)">
+                </div>
+            </div>
+
+            <div id="message" class="hidden rounded-md p-4">
+                <p id="message-text" class="text-sm"></p>
+            </div>
+
+            <div id="dev-link" class="hidden bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                <p class="text-sm text-yellow-800 mb-2">Email is disabled. Use this link to sign in:</p>
+                <a id="verify-link" href="#" class="text-blue-600 hover:underline break-all"></a>
+            </div>
+
+            <div>
+                <button type="submit" id="submit-btn"
+                    class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <span id="btn-text">Send Magic Link</span>
+                    <span id="btn-loading" class="hidden">
+                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </form>
+
+        <div class="text-center">
+            <a href="/" class="text-sm text-gray-600 hover:text-gray-900">
+                &larr; Back to home
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+async function handleLogin(event) {
+    event.preventDefault();
+
+    const email = document.getElementById('email').value;
+    const name = document.getElementById('name').value;
+    const submitBtn = document.getElementById('submit-btn');
+    const btnText = document.getElementById('btn-text');
+    const btnLoading = document.getElementById('btn-loading');
+    const messageDiv = document.getElementById('message');
+    const messageText = document.getElementById('message-text');
+    const devLink = document.getElementById('dev-link');
+
+    // Show loading
+    submitBtn.disabled = true;
+    btnText.classList.add('hidden');
+    btnLoading.classList.remove('hidden');
+    messageDiv.classList.add('hidden');
+    devLink.classList.add('hidden');
+
+    try {
+        const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, name }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            messageDiv.classList.remove('hidden', 'bg-red-50', 'text-red-800');
+            messageDiv.classList.add('bg-green-50');
+            messageText.classList.remove('text-red-800');
+            messageText.classList.add('text-green-800');
+            messageText.textContent = data.message;
+
+            if (data.dev_mode && data.verify_link) {
+                devLink.classList.remove('hidden');
+                document.getElementById('verify-link').href = data.verify_link;
+                document.getElementById('verify-link').textContent = data.verify_link;
+            }
+        } else {
+            messageDiv.classList.remove('hidden', 'bg-green-50');
+            messageDiv.classList.add('bg-red-50');
+            messageText.classList.remove('text-green-800');
+            messageText.classList.add('text-red-800');
+            messageText.textContent = data.detail || 'An error occurred';
+        }
+    } catch (error) {
+        messageDiv.classList.remove('hidden', 'bg-green-50');
+        messageDiv.classList.add('bg-red-50');
+        messageText.classList.remove('text-green-800');
+        messageText.classList.add('text-red-800');
+        messageText.textContent = 'Network error. Please try again.';
+    } finally {
+        submitBtn.disabled = false;
+        btnText.classList.remove('hidden');
+        btnLoading.classList.add('hidden');
+    }
+}
+</script>
+{% endblock %}

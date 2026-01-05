@@ -1,0 +1,29 @@
+# RFBooking FastAPI OSS - Self-hosted Equipment Booking System
+# Copyright (C) 2025 Oleg Tokmakov
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+version: '3.8'
+
+services:
+  rfbooking:
+    build: .
+    container_name: rfbooking
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data
+      - ./config:/app/config
+      - ollama-data:/root/.ollama
+    environment:
+      - RFBOOKING_CONFIG=/app/config/config.yaml
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+volumes:
+  ollama-data:
+    driver: local

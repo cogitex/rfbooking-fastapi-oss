@@ -1,0 +1,53 @@
+# RFBooking FastAPI OSS - Self-hosted Equipment Booking System
+# Copyright (C) 2025 Oleg Tokmakov
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rfbooking-fastapi-oss"
+version = "1.0.0"
+description = "Self-hosted Equipment Booking System with AI Assistant"
+readme = "README.md"
+license = {text = "AGPL-3.0-or-later"}
+authors = [
+    {name = "Oleg Tokmakov", email = "oleg.tokmakov@gmail.com"}
+]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Scheduling",
+]
+keywords = ["booking", "equipment", "scheduling", "fastapi", "ai"]
+
+[project.urls]
+Homepage = "https://github.com/otokmakov/rfbooking-fastapi-oss"
+Documentation = "https://github.com/otokmakov/rfbooking-fastapi-oss#readme"
+Repository = "https://github.com/otokmakov/rfbooking-fastapi-oss.git"
+Issues = "https://github.com/otokmakov/rfbooking-fastapi-oss/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311', 'py312']
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
