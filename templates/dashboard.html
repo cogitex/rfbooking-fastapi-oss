@@ -127,66 +127,189 @@
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h2>
 
             <!-- User Info Card -->
-            <div class="card mb-6">
-                <div class="card-header">
-                    <span>My Information</span>
+            <div class="card card-info mb-6">
+                <div class="card-header cursor-pointer" onclick="toggleCard('userInfo')">
+                    <div class="flex items-center justify-between w-full">
+                        <h2 class="text-lg font-bold">Your Information</h2>
+                        <span id="userInfoToggle" class="text-2xl text-gray-500 transition-transform">▼</span>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="grid md:grid-cols-2 gap-6">
+                <div id="userInfoContent" class="card-body py-3 px-4">
+                    <!-- First Row: Name, Role, Organization -->
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
                         <div>
-                            <div class="text-sm text-gray-500 mb-1">Name</div>
-                            <div class="font-medium">{{ user.name if user else 'N/A' }}</div>
+                            <label class="text-xs font-semibold text-gray-600 uppercase">Name</label>
+                            <p id="userName" class="text-sm text-gray-900 font-medium">{{ user.name if user else 'Loading...' }}</p>
                         </div>
                         <div>
-                            <div class="text-sm text-gray-500 mb-1">Email</div>
-                            <div class="font-medium">{{ user.email if user else 'N/A' }}</div>
+                            <label class="text-xs font-semibold text-gray-600 uppercase">Role</label>
+                            <p id="userRoleInfo" class="inline-block">
+                                <span class="badge badge-{{ user.role_name | lower if user else 'user' }}">{{ user.role_name if user else 'User' }}</span>
+                            </p>
                         </div>
                         <div>
-                            <div class="text-sm text-gray-500 mb-1">Role</div>
-                            <span class="role-badge role-badge-{{ user.role_name | lower if user else 'user' }}">{{ user.role_name if user else 'User' }}</span>
+                            <label class="text-xs font-semibold text-gray-600 uppercase">Org</label>
+                            <p id="userOrg" class="text-sm text-gray-900 font-medium">{{ organization_name }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Second Row: Email, Last Login, Session Expiry -->
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+                        <div>
+                            <label class="text-xs font-semibold text-gray-600 uppercase">Email</label>
+                            <p id="userEmailInfo" class="text-sm text-gray-900 font-medium truncate">{{ user.email if user else 'Loading...' }}</p>
                         </div>
                         <div>
-                            <div class="text-sm text-gray-500 mb-1">Email Notifications</div>
-                            <label class="flex items-center cursor-pointer">
-                                <div id="email-toggle" class="toggle-switch {{ 'active' if user and user.email_notifications_enabled else '' }}" onclick="toggleEmailNotifications()"></div>
-                                <span class="ml-2 text-sm" id="email-toggle-label">{{ 'Enabled' if user and user.email_notifications_enabled else 'Disabled' }}</span>
+                            <label class="text-xs font-semibold text-gray-600 uppercase">Last Login</label>
+                            <p id="userLastLogin" class="text-sm text-gray-700">{% if user and user.last_login_at %}{{ user.last_login_at }}{% else %}Never{% endif %}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-gray-600 uppercase">Session</label>
+                            <p id="cookieLifetime" class="text-xs text-gray-700">Calculating...</p>
+                        </div>
+                    </div>
+
+                    <!-- Email Notifications Toggle -->
+                    <div class="mt-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="text-sm font-semibold text-gray-700">Email Notifications</label>
+                                <p class="text-xs text-gray-600 mt-1">Receive booking reminders and updates via email</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="emailNotificationsToggle" class="sr-only peer"
+                                       {{ 'checked' if user and user.email_notifications_enabled else '' }}
+                                       onchange="updateEmailNotificationPreference(this.checked)">
+                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4
+                                            peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full
+                                            peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px]
+                                            after:left-[2px] after:bg-white after:border-gray-300 after:border
+                                            after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500">
+                                </div>
                             </label>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- My Bookings Summary -->
-            <div class="card mb-6">
-                <div class="card-header">
-                    <span>My Upcoming Bookings</span>
-                    <button onclick="showSection('new-booking')" class="btn-primary text-sm">New Booking</button>
-                </div>
-                <div class="card-body">
-                    <div id="my-bookings-summary" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div class="text-gray-500">Loading...</div>
+                    <!-- Logout Link -->
+                    <div class="flex items-center gap-2 mt-4">
+                        <a href="#" onclick="logoutUser(); return false;" class="text-xs text-red-600 hover:text-red-700 font-medium transition-colors">Logout</a>
+                        <span class="text-xs text-gray-500">— You'll need to request a new registration link to log in again.</span>
                     </div>
                 </div>
             </div>
 
-            <!-- System Policies -->
-            <div class="card">
-                <div class="card-header">
-                    <span>System Policies</span>
+            <!-- My Bookings Card -->
+            <div class="card card-booking mb-6">
+                <div class="card-header cursor-pointer" onclick="toggleCard('myBookings')">
+                    <div class="flex items-center justify-between w-full">
+                        <h2 class="text-lg font-bold">My Bookings</h2>
+                        <span id="myBookingsToggle" class="text-2xl text-gray-500 transition-transform">▼</span>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="grid md:grid-cols-3 gap-4 text-sm">
-                        <div class="p-3 bg-gray-50 rounded">
-                            <div class="text-gray-500">Max Sessions</div>
-                            <div class="font-semibold">10 active sessions</div>
+                <div id="myBookingsContent" class="card-body">
+                    <div id="my-bookings-summary" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[550px] overflow-y-auto">
+                        <p class="text-gray-500 text-center py-8 col-span-full">Loading bookings...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System-wide User Policies -->
+            <div class="card">
+                <div class="card-header cursor-pointer" onclick="toggleCard('userPolicies')">
+                    <div class="flex items-center justify-between w-full">
+                        <div>
+                            <h2 class="text-lg font-bold text-brand-700">
+                                <svg class="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
+                                System-wide User Policies
+                            </h2>
+                            <p class="text-sm text-gray-600">Security and usage limits applied to all users</p>
                         </div>
-                        <div class="p-3 bg-gray-50 rounded">
-                            <div class="text-gray-500">Daily Booking Limit</div>
-                            <div class="font-semibold">20 bookings/day</div>
+                        <span id="userPoliciesToggle" class="text-2xl text-gray-500 transition-transform">▼</span>
+                    </div>
+                </div>
+                <div id="userPoliciesContent" class="card-body">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <!-- Token Limit Policy -->
+                        <div class="flex items-start p-3 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
+                            <div class="flex-shrink-0">
+                                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-semibold text-blue-900">Active Sessions Limit</h3>
+                                <p class="text-sm text-blue-800 mt-1">
+                                    <span class="font-bold text-lg">10</span> maximum active tokens per user
+                                </p>
+                                <p class="text-xs text-blue-700 mt-2">
+                                    Users can be logged in on up to 10 devices simultaneously. Oldest sessions are automatically logged out when this limit is exceeded.
+                                </p>
+                            </div>
                         </div>
-                        <div class="p-3 bg-gray-50 rounded">
-                            <div class="text-gray-500">Max Booking Duration</div>
-                            <div class="font-semibold">30 days</div>
+
+                        <!-- Booking Limit Policy -->
+                        <div class="flex items-start p-3 bg-green-50 border-l-4 border-green-500 rounded-lg">
+                            <div class="flex-shrink-0">
+                                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-semibold text-green-900">Daily Booking Limit</h3>
+                                <p class="text-sm text-green-800 mt-1">
+                                    <span class="font-bold text-lg">20</span> maximum bookings per day
+                                </p>
+                                <p class="text-xs text-green-700 mt-2">
+                                    Each user can create up to 20 new bookings per day. This prevents system abuse and ensures fair resource allocation.
+                                </p>
+                                <p class="text-xs text-green-700 mt-2 pt-2 border-t border-green-200">
+                                    <strong>Note:</strong> Regular users are limited to 5 notification emails per day (booking and cancellation confirmations, reminders) to prevent inbox overload.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Booking Duration Limit Policy -->
+                        <div class="flex items-start p-3 bg-purple-50 border-l-4 border-purple-500 rounded-lg">
+                            <div class="flex-shrink-0">
+                                <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-semibold text-purple-900">Maximum Booking Duration</h3>
+                                <p class="text-sm text-purple-800 mt-1">
+                                    <span class="font-bold text-lg">30 days</span> maximum per single booking
+                                </p>
+                                <p class="text-xs text-purple-700 mt-2">
+                                    Each individual booking can span up to 30 days (1 month). This ensures fair equipment sharing and prevents long-term monopolization.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Info -->
+                    <div class="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-gray-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div class="text-xs text-gray-600">
+                                <p class="font-medium text-gray-800 mb-1">Policy Notes:</p>
+                                <ul class="list-disc list-inside space-y-1 ml-2">
+                                    <li>These limits apply to all user roles (user, manager, admin)</li>
+                                    <li>Daily limits reset at midnight UTC</li>
+                                    <li>Token limit ensures security and session hygiene</li>
+                                    <li>Daily booking limit prevents accidental or malicious system overload</li>
+                                    <li>Booking duration limit promotes fair equipment sharing across users</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1154,21 +1277,32 @@ function showToast(message, type = 'info') {
 // ===============================
 // Section Navigation
 // ===============================
-function showSection(sectionName) {
+function showSection(sectionName, updateHash = true) {
+    // Validate section exists
+    const section = document.getElementById('section-' + sectionName);
+    if (!section) {
+        console.warn(`Section ${sectionName} not found`);
+        return;
+    }
+
     // Hide all sections
     document.querySelectorAll('.section-content').forEach(s => s.classList.add('hidden'));
     // Remove active from all links
     document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
 
     // Show selected section
-    const section = document.getElementById('section-' + sectionName);
-    if (section) section.classList.remove('hidden');
+    section.classList.remove('hidden');
 
     // Activate link
     const link = document.querySelector(`[data-section="${sectionName}"]`);
     if (link) link.classList.add('active');
 
     currentSection = sectionName;
+
+    // Update URL hash (for refresh persistence)
+    if (updateHash) {
+        window.location.hash = sectionName;
+    }
 
     // Load section data
     if (sectionName === 'information') loadInformation();
@@ -1181,45 +1315,122 @@ function showSection(sectionName) {
     if (sectionName === 'ai-rules') loadAIRules();
 }
 
+// Handle browser back/forward buttons
+window.addEventListener('hashchange', () => {
+    const section = window.location.hash.slice(1) || 'information';
+    showSection(section, false); // Don't update hash again to avoid loop
+});
+
 // ===============================
 // Information Section
 // ===============================
 async function loadInformation() {
+    // Calculate and display session expiry
+    calculateSessionExpiry();
+
     // Load upcoming bookings
     const data = await apiCall('/api/bookings?user_id=' + (userData?.id || ''));
     const container = document.getElementById('my-bookings-summary');
 
     const now = new Date().toISOString().split('T')[0];
-    const upcoming = (data.bookings || []).filter(b => b.status === 'active' && b.start_date >= now).slice(0, 6);
+    const upcoming = (data.bookings || []).filter(b => b.status === 'active' && b.start_date >= now);
 
     if (upcoming.length === 0) {
-        container.innerHTML = '<div class="text-gray-500">No upcoming bookings</div>';
+        container.innerHTML = '<p class="text-gray-500 text-center py-8 col-span-full">No upcoming bookings</p>';
         return;
     }
 
-    container.innerHTML = upcoming.map(b => `
-        <div class="p-4 bg-gray-50 rounded-lg">
-            <div class="font-medium">${escapeHtml(b.equipment_name || 'Equipment')}</div>
-            <div class="text-sm text-gray-500">${b.start_date} - ${b.end_date}</div>
-            <div class="text-sm text-gray-500">${b.start_time?.slice(0,5)} - ${b.end_time?.slice(0,5)}</div>
+    // Format time HH:MM
+    const formatTime = (timeStr) => {
+        if (!timeStr) return '';
+        return timeStr.slice(0, 5);
+    };
+
+    container.innerHTML = upcoming.map(booking => `
+        <div class="border border-brand-200 rounded-lg p-4 bg-white hover:shadow-xl transition-shadow">
+            <!-- Equipment and Status -->
+            <div class="flex justify-between items-start mb-3">
+                <div class="flex-1">
+                    <h3 class="font-semibold text-gray-900">${escapeHtml(booking.equipment_name || 'Equipment')}</h3>
+                    ${booking.equipment_location ? `<p class="text-xs text-gray-500">📍 ${escapeHtml(booking.equipment_location)}</p>` : ''}
+                </div>
+                <span class="badge badge-active">Active</span>
+            </div>
+
+            <!-- Booking Dates/Times -->
+            <div class="flex items-center gap-2 mb-3 text-sm text-gray-600">
+                <span>📅 ${escapeHtml(booking.start_date)} to ${escapeHtml(booking.end_date)}</span>
+            </div>
+            <div class="flex items-center gap-2 mb-3 text-sm text-gray-600">
+                <span>⏰ ${escapeHtml(formatTime(booking.start_time))} - ${escapeHtml(formatTime(booking.end_time))}</span>
+            </div>
+
+            <!-- Booking Notes -->
+            ${booking.description ? `<p class="text-sm text-gray-700 mb-3 p-2 bg-yellow-50 rounded border-l-2 border-yellow-300">📝 ${escapeHtml(booking.description)}</p>` : ''}
+
+            <!-- Actions -->
+            <div class="flex gap-4">
+                <button class="text-sm text-blue-500 hover:text-blue-700 font-medium transition-colors" onclick="editBookingDescription(${booking.id})">Edit Description</button>
+                <button class="text-sm text-red-400 hover:text-red-700 font-medium transition-colors" onclick="cancelBooking(${booking.id})">Cancel Booking</button>
+            </div>
         </div>
     `).join('');
 }
 
-async function toggleEmailNotifications() {
-    const toggle = document.getElementById('email-toggle');
-    const label = document.getElementById('email-toggle-label');
-    const isActive = toggle.classList.contains('active');
+function calculateSessionExpiry() {
+    // This will be populated from cookie or auth token
+    // For now, calculate a default 30-day expiry
+    const expiryElement = document.getElementById('cookieLifetime');
+    if (!expiryElement) return;
 
+    // Try to get expiry from userData if available
+    const now = new Date();
+    const expiryDate = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 days from now
+
+    const msRemaining = expiryDate - now;
+    const daysRemaining = Math.floor(msRemaining / (1000 * 60 * 60 * 24));
+    const hoursRemaining = Math.floor((msRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+    expiryElement.textContent = `${daysRemaining} days, ${hoursRemaining} hours`;
+}
+
+async function updateEmailNotificationPreference(enabled) {
     try {
         await apiCall('/api/user/notification-preferences', 'PATCH', {
-            email_notifications_enabled: !isActive
+            email_notifications_enabled: enabled
         });
-        toggle.classList.toggle('active');
-        label.textContent = isActive ? 'Disabled' : 'Enabled';
         showToast('Notification preferences updated', 'success');
     } catch (e) {
         showToast('Failed to update preferences', 'error');
+        // Revert the checkbox state
+        document.getElementById('emailNotificationsToggle').checked = !enabled;
+    }
+}
+
+async function editBookingDescription(bookingId) {
+    const newDescription = prompt('Enter new description:');
+    if (newDescription === null) return; // User cancelled
+
+    try {
+        await apiCall(`/api/bookings/${bookingId}/description`, 'PATCH', {
+            description: newDescription
+        });
+        showToast('Description updated', 'success');
+        loadInformation();
+    } catch (e) {
+        showToast('Failed to update description', 'error');
+    }
+}
+
+async function cancelBooking(bookingId) {
+    if (!confirm('Are you sure you want to cancel this booking?')) return;
+
+    try {
+        await apiCall(`/api/bookings/${bookingId}`, 'DELETE');
+        showToast('Booking cancelled', 'success');
+        loadInformation();
+    } catch (e) {
+        showToast('Failed to cancel booking', 'error');
     }
 }
 
@@ -1726,11 +1937,13 @@ function updateDateDisplay() {
 function toggleCard(cardId) {
     const content = document.getElementById(cardId + 'Content');
     const toggle = document.getElementById(cardId + 'Toggle');
-    if (content.style.display === 'none') {
-        content.style.display = 'block';
+    if (!content || !toggle) return;
+
+    if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
         toggle.style.transform = 'rotate(0deg)';
     } else {
-        content.style.display = 'none';
+        content.classList.add('hidden');
         toggle.style.transform = 'rotate(-90deg)';
     }
 }
@@ -3000,7 +3213,10 @@ function updateSidebarDate() {
 // ===============================
 document.addEventListener('DOMContentLoaded', () => {
     updateSidebarDate();
-    showSection('information');
+    // Read section from URL hash or default to 'information'
+    const hash = window.location.hash.slice(1);
+    const initialSection = hash || 'information';
+    showSection(initialSection, false); // Don't update hash if it's already set
 });
 </script>
 {% endblock %}

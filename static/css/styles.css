@@ -325,6 +325,14 @@ tbody td {
     border-left: 4px solid var(--accent-orange);
 }
 
+.card-info {
+    border-left: 4px solid var(--accent-blue);
+}
+
+.card-booking {
+    border-left: 4px solid var(--accent-teal);
+}
+
 .card-users {
     border-left: 4px solid var(--accent-pink);
 }
@@ -545,18 +553,26 @@ tbody td {
 
 /* Badge variants (aligned with rfbooking-core) */
 .badge-admin {
-    background: #fed7aa !important;
-    color: #9a3412 !important;
+    background-color: #fee;
+    color: #c33;
+    border: 1px solid #faa;
 }
 
 .badge-manager {
-    background: #fed7aa !important;
-    color: #9a3412 !important;
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #7dd3fc;
 }
 
 .badge-user {
-    background: #f3f4f6 !important;
-    color: #374151 !important;
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.badge-active {
+    background-color: var(--success-bg);
+    color: var(--success-text);
 }
 
 /* ============================================================================
