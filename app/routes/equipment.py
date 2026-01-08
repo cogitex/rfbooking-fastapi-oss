@@ -29,6 +29,7 @@ from app.middleware.auth import get_current_user, require_admin, check_equipment
 from app.models.equipment import Equipment, EquipmentType, EquipmentTypeUser, EquipmentManager
 from app.models.user import User
 from app.utils.helpers import sanitize_input
+from app.services.ai_service import invalidate_equipment_cache
 
 router = APIRouter()
 
@@ -302,6 +303,9 @@ async def create_equipment(
     db.commit()
     db.refresh(equipment)
 
+    # Invalidate AI equipment cache
+    invalidate_equipment_cache()
+
     return {
         "success": True,
         "equipment": equipment.to_dict(),
@@ -354,6 +358,9 @@ async def update_equipment(
     db.commit()
     db.refresh(equipment)
 
+    # Invalidate AI equipment cache
+    invalidate_equipment_cache()
+
     return {
         "success": True,
         "equipment": equipment.to_dict(),
@@ -378,6 +385,9 @@ async def delete_equipment(
 
     equipment.is_active = False
     db.commit()
+
+    # Invalidate AI equipment cache
+    invalidate_equipment_cache()
 
     return {
         "success": True,

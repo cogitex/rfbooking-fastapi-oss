@@ -28,11 +28,12 @@ class AppConfig(BaseModel):
     """Application configuration."""
 
     name: str = "RFBooking"
-    secret_key: str = Field(default="change-this-to-a-random-secret-key")
     debug: bool = False
     host: str = "0.0.0.0"
     port: int = 8000
     base_url: str = "http://localhost:8000"
+    demo_mode: bool = False  # Read-only demo instance
+    setup_completed: bool = False  # Set to True after initial setup wizard
 
 
 class AdminConfig(BaseModel):
@@ -59,11 +60,17 @@ class DatabaseConfig(BaseModel):
 class EmailConfig(BaseModel):
     """Email configuration."""
 
-    enabled: bool = False
-    provider: str = "resend"
-    api_key: str = ""
+    provider: str = "smtp"  # "smtp" or "resend"
+    api_key: str = ""  # For Resend
     from_address: str = "noreply@example.com"
     from_name: str = "RFBooking System"
+    # SMTP settings (used when provider="smtp")
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_use_tls: bool = True
+    smtp_use_ssl: bool = False
 
 
 class AIConfig(BaseModel):
@@ -99,6 +106,17 @@ class BookingConfig(BaseModel):
     max_description_length: int = 10240
     reminder_hours: int = 24
     calibration_reminder_days: int = 7
+    short_notice_days: int = 8  # Days before booking to consider "short notice" cancellation
+
+
+class NotificationConfig(BaseModel):
+    """Notification settings configuration."""
+
+    working_hours_start: str = "09:00"  # UTC
+    working_hours_end: str = "17:00"  # UTC
+    enforce_working_hours: bool = True
+    # Types that bypass working hours (sent immediately)
+    urgent_types: list = ["booking_cancellation", "short_notice_cancellation"]
 
 
 class CleanupConfig(BaseModel):
@@ -122,7 +140,13 @@ class Settings(BaseModel):
     security: SecurityConfig = Field(default_factory=SecurityConfig)
     rate_limit: RateLimitConfig = Field(default_factory=RateLimitConfig)
     booking: BookingConfig = Field(default_factory=BookingConfig)
+    notification: NotificationConfig = Field(default_factory=NotificationConfig)
     cleanup: CleanupConfig = Field(default_factory=CleanupConfig)
+
+    @property
+    def needs_setup(self) -> bool:
+        """Check if initial setup is required."""
+        return not self.app.setup_completed
 
 
 def load_config(config_path: Optional[str] = None) -> Settings:
@@ -187,3 +211,44 @@ def init_settings(config_path: Optional[str] = None) -> Settings:
     global _settings
     _settings = load_config(config_path)
     return _settings
+
+
+def save_config(settings: Settings, config_path: Optional[str] = None) -> None:
+    """Save configuration to YAML file.
+
+    Args:
+        settings: Settings object to save.
+        config_path: Path to config file. If None, uses environment variable or default.
+    """
+    # Determine config file path
+    if config_path is None:
+        config_path = os.environ.get("RFBOOKING_CONFIG")
+
+    if config_path is None:
+        # Try default paths
+        default_paths = [
+            Path("/app/config/config.yaml"),
+            Path("config/config.yaml"),
+        ]
+        for path in default_paths:
+            if path.exists():
+                config_path = str(path)
+                break
+
+    if config_path is None:
+        config_path = "/app/config/config.yaml"
+
+    # Convert settings to dict, excluding None values
+    config_data = settings.model_dump(exclude_none=True)
+
+    # Write to file
+    with open(config_path, "w") as f:
+        yaml.dump(config_data, f, default_flow_style=False, sort_keys=False)
+
+    print(f"Configuration saved to: {config_path}")
+
+
+def update_settings(new_settings: Settings) -> None:
+    """Update the global settings instance."""
+    global _settings
+    _settings = new_settings

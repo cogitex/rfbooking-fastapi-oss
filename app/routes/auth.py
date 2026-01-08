@@ -21,18 +21,23 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.database import get_db
-from app.middleware.auth import get_current_user, get_csrf_token
-from app.models.auth import AuthToken, MagicLink
+from app.middleware.auth import get_current_user, get_csrf_token, check_service_mode
+from app.models.auth import AuthToken, MagicLink, RegistrationSettings, AllowedEmail
 from app.models.user import User
 from app.models.equipment import EquipmentType, EquipmentTypeUser
 from app.utils.helpers import generate_token, is_valid_email
 
 router = APIRouter(prefix="/api/auth")
+
+# Templates for auth redirects
+templates = Jinja2Templates(directory="templates")
 
 
 class RegisterRequest(BaseModel):
@@ -84,6 +89,32 @@ async def register(
     # Check if user exists
     user = db.query(User).filter(User.email == email).first()
 
+    # If user doesn't exist, check registration settings
+    if not user:
+        reg_settings = db.query(RegistrationSettings).first()
+
+        # Check if registration is restricted
+        if reg_settings and reg_settings.registration_mode == "restricted":
+            email_domain = email.split("@")[1].lower()
+
+            # Check allowed domains
+            domain_allowed = False
+            if reg_settings.allowed_domains:
+                allowed_domains = [d.strip().lower() for d in reg_settings.allowed_domains.split(",")]
+                domain_allowed = email_domain in allowed_domains
+
+            # Check specific email allowlist
+            email_allowed = db.query(AllowedEmail).filter(AllowedEmail.email == email).first() is not None
+
+            # Also allow the configured admin email
+            is_admin_email = email.lower() == settings.admin.email.lower()
+
+            if not domain_allowed and not email_allowed and not is_admin_email:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Registration is restricted. Your email is not in the allowlist.",
+                )
+
     if user and not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -110,40 +141,33 @@ async def register(
     db.commit()
 
     # Build verification URL
-    verify_url = f"{settings.app.base_url}/auth/verify?token={token}"
+    verify_url = f"{settings.app.base_url}/api/auth/verify?token={token}"
 
-    # Check if email is enabled
-    if settings.email.enabled:
-        # Send magic link email
-        from app.services.email import get_email_service
+    # Send magic link email
+    from app.services.email import get_email_service
 
-        email_service = get_email_service()
-        try:
-            await email_service.send_magic_link(email, token, name)
-            return RegisterResponse(
-                success=True,
-                message=f"Magic link sent to {email}. Check your inbox.",
-                dev_mode=False,
-            )
-        except Exception as e:
-            # Log error but don't expose details
-            print(f"Failed to send email: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to send verification email",
-            )
-    else:
-        # Dev mode - return link directly
+    email_service = get_email_service()
+    try:
+        await email_service.send_magic_link(email, token, name)
         return RegisterResponse(
             success=True,
-            message="Email disabled. Use the verification link below.",
+            message=f"Magic link sent to {email}. Check your inbox.",
+            dev_mode=False,
+        )
+    except Exception as e:
+        # Log error and fall back to showing the link (for dev/misconfigured email)
+        print(f"Failed to send email: {e}")
+        return RegisterResponse(
+            success=True,
+            message=f"Email sending failed. Use the verification link below. Error: {str(e)[:100]}",
             dev_mode=True,
             verify_link=verify_url,
         )
 
 
-@router.get("/verify")
+@router.get("/verify", response_class=HTMLResponse)
 async def verify_magic_link(
+    request: Request,
     token: str,
     response: Response,
     db: Session = Depends(get_db),
@@ -159,6 +183,45 @@ async def verify_magic_link(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired magic link",
         )
+
+    # Token reuse logic for Chrome mobile prefetch
+    # If magic link was used within 2 minutes and has a valid auth token, reuse it
+    if magic_link.used and magic_link.used_at:
+        time_since_use = (datetime.utcnow() - magic_link.used_at).total_seconds()
+        if time_since_use < 120:  # 2 minutes
+            # Check if we have a valid auth token to reuse
+            if magic_link.last_auth_token_id:
+                existing_token = db.query(AuthToken).filter(
+                    AuthToken.id == magic_link.last_auth_token_id
+                ).first()
+                if existing_token and existing_token.is_valid():
+                    # Reuse existing token - return same session
+                    html_response = templates.TemplateResponse(
+                        "auth_redirect.html",
+                        {
+                            "request": request,
+                            "app_name": settings.app.name,
+                            "redirect_url": "/dashboard",
+                        },
+                    )
+                    html_response.set_cookie(
+                        key="auth_token",
+                        value=existing_token.token,
+                        httponly=True,
+                        secure=not settings.app.debug,
+                        samesite="lax",
+                        max_age=settings.security.auth_token_days * 24 * 60 * 60,
+                    )
+                    csrf_token = secrets.token_urlsafe(32)
+                    html_response.set_cookie(
+                        key="csrf_token",
+                        value=csrf_token,
+                        httponly=False,
+                        secure=not settings.app.debug,
+                        samesite="lax",
+                        max_age=settings.security.auth_token_days * 24 * 60 * 60,
+                    )
+                    return html_response
 
     if not magic_link.is_valid():
         raise HTTPException(
@@ -222,9 +285,26 @@ async def verify_magic_link(
     )
     db.add(auth_token)
     db.commit()
+    db.refresh(auth_token)
 
-    # Set cookies
-    response.set_cookie(
+    # Store auth token ID in magic link for reuse within 2 minutes
+    magic_link.last_auth_token_id = auth_token.id
+    db.commit()
+
+    # Create HTML response with redirect page
+    # This fixes Chrome mobile email client prefetching issues
+    # The delayed JavaScript redirect ensures cookies are properly set
+    html_response = templates.TemplateResponse(
+        "auth_redirect.html",
+        {
+            "request": request,
+            "app_name": settings.app.name,
+            "redirect_url": "/dashboard",
+        },
+    )
+
+    # Set auth cookie
+    html_response.set_cookie(
         key="auth_token",
         value=auth_token.token,
         httponly=True,
@@ -235,7 +315,7 @@ async def verify_magic_link(
 
     # Set CSRF token
     csrf_token = secrets.token_urlsafe(32)
-    response.set_cookie(
+    html_response.set_cookie(
         key="csrf_token",
         value=csrf_token,
         httponly=False,  # JavaScript needs to read this
@@ -244,10 +324,7 @@ async def verify_magic_link(
         max_age=settings.security.auth_token_days * 24 * 60 * 60,
     )
 
-    # Return redirect response
-    response.status_code = status.HTTP_302_FOUND
-    response.headers["Location"] = "/dashboard"
-    return response
+    return html_response
 
 
 @router.get("/validate")
@@ -308,3 +385,15 @@ async def logout(
     response.delete_cookie("csrf_token")
 
     return {"success": True, "message": "Logged out successfully"}
+
+
+@router.get("/service-mode")
+async def get_service_mode_status(
+    db: Session = Depends(get_db),
+):
+    """Get current service mode status (public endpoint for login page)."""
+    status = check_service_mode(db)
+    return {
+        "enabled": status["enabled"],
+        "message": status["message"] if status["enabled"] else None,
+    }

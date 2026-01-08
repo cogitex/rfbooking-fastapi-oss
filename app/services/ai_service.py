@@ -18,8 +18,9 @@
 
 import json
 import re
+import time
 from datetime import date, datetime, timedelta
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -29,12 +30,151 @@ from app.models.booking import Booking
 from app.models.user import User
 
 
+# Equipment cache for reducing database queries
+_equipment_cache: Dict[str, Any] = {
+    "data": None,
+    "timestamp": 0,
+    "ttl": 4 * 60 * 60,  # 4 hours in seconds
+}
+
+
+def invalidate_equipment_cache():
+    """Invalidate the equipment cache (call on equipment create/update/delete)."""
+    global _equipment_cache
+    _equipment_cache["data"] = None
+    _equipment_cache["timestamp"] = 0
+
+
+class SpecificationExtractor:
+    """Extract technical specifications from natural language prompts."""
+
+    # Common unit patterns for various specifications
+    SPEC_PATTERNS = {
+        "power": [
+            # Watts: 800W, 1.5kW, 2 kW, 500 watts
+            r'(\d+(?:\.\d+)?)\s*(?:k)?[wW](?:atts?)?',
+            r'(\d+(?:\.\d+)?)\s*kilo\s*watts?',
+        ],
+        "frequency": [
+            # Frequency: 2.4GHz, 5.8 GHz, 900MHz, 2.4 ghz
+            r'(\d+(?:\.\d+)?)\s*[gG][hH][zZ]',
+            r'(\d+(?:\.\d+)?)\s*[mM][hH][zZ]',
+            r'(\d+(?:\.\d+)?)\s*[tT][hH][zZ]',
+        ],
+        "temperature": [
+            # Temperature: 85°C, -40C, 200 degrees, 150°
+            r'(-?\d+(?:\.\d+)?)\s*°?\s*[cC](?:elsius)?',
+            r'(-?\d+(?:\.\d+)?)\s*degrees?\s*(?:[cC](?:elsius)?)?',
+        ],
+        "voltage": [
+            # Voltage: 28V, 12 volts, 3.3V
+            r'(\d+(?:\.\d+)?)\s*[vV](?:olts?)?',
+        ],
+        "current": [
+            # Current: 10A, 500mA, 2.5 amps
+            r'(\d+(?:\.\d+)?)\s*[mM]?[aA](?:mps?)?',
+        ],
+        "bandwidth": [
+            # Bandwidth: 100MHz, 1GHz bandwidth
+            r'(\d+(?:\.\d+)?)\s*[gGmM][hH][zZ]\s*(?:bandwidth|bw)',
+        ],
+    }
+
+    # Unit normalization (convert everything to base units)
+    UNIT_MULTIPLIERS = {
+        "kW": 1000,
+        "kw": 1000,
+        "W": 1,
+        "w": 1,
+        "GHz": 1e9,
+        "ghz": 1e9,
+        "MHz": 1e6,
+        "mhz": 1e6,
+        "THz": 1e12,
+        "thz": 1e12,
+        "mA": 0.001,
+        "ma": 0.001,
+        "A": 1,
+        "a": 1,
+    }
+
+    @classmethod
+    def extract_specs(cls, prompt: str) -> Dict[str, List[Dict[str, Any]]]:
+        """Extract all technical specifications from a prompt.
+
+        Args:
+            prompt: Natural language prompt
+
+        Returns:
+            Dictionary with spec types and extracted values
+        """
+        specs = {}
+
+        for spec_type, patterns in cls.SPEC_PATTERNS.items():
+            matches = []
+            for pattern in patterns:
+                for match in re.finditer(pattern, prompt, re.IGNORECASE):
+                    value_str = match.group(1)
+                    try:
+                        value = float(value_str)
+                        unit = cls._extract_unit(match.group(0), spec_type)
+                        normalized_value = cls._normalize_value(value, unit)
+                        matches.append({
+                            "raw": match.group(0),
+                            "value": value,
+                            "unit": unit,
+                            "normalized_value": normalized_value,
+                        })
+                    except ValueError:
+                        continue
+
+            if matches:
+                specs[spec_type] = matches
+
+        return specs
+
+    @classmethod
+    def _extract_unit(cls, match_str: str, spec_type: str) -> str:
+        """Extract the unit from a matched string."""
+        match_str = match_str.strip()
+
+        if spec_type == "power":
+            if re.search(r'k[wW]', match_str):
+                return "kW"
+            return "W"
+        elif spec_type == "frequency":
+            if re.search(r'[gG][hH][zZ]', match_str):
+                return "GHz"
+            elif re.search(r'[mM][hH][zZ]', match_str):
+                return "MHz"
+            elif re.search(r'[tT][hH][zZ]', match_str):
+                return "THz"
+            return "Hz"
+        elif spec_type == "temperature":
+            return "°C"
+        elif spec_type == "voltage":
+            return "V"
+        elif spec_type == "current":
+            if re.search(r'm[aA]', match_str):
+                return "mA"
+            return "A"
+
+        return ""
+
+    @classmethod
+    def _normalize_value(cls, value: float, unit: str) -> float:
+        """Normalize value to base unit."""
+        multiplier = cls.UNIT_MULTIPLIERS.get(unit, 1)
+        return value * multiplier
+
+
 class AIService:
     """AI Service for equipment recommendation."""
 
     def __init__(self):
         self.settings = get_settings()
         self._client = None
+        self.spec_extractor = SpecificationExtractor()
 
     @property
     def client(self):
@@ -43,6 +183,131 @@ class AIService:
             import ollama
             self._client = ollama.Client(host=self.settings.ai.ollama_host)
         return self._client
+
+    def get_cached_equipment(self, db: Session) -> Optional[List[Dict[str, Any]]]:
+        """Get equipment from cache if valid, otherwise return None.
+
+        Args:
+            db: Database session (used if cache miss)
+
+        Returns:
+            Cached equipment data or None if cache expired
+        """
+        global _equipment_cache
+
+        current_time = time.time()
+        if (
+            _equipment_cache["data"] is not None
+            and (current_time - _equipment_cache["timestamp"]) < _equipment_cache["ttl"]
+        ):
+            return _equipment_cache["data"]
+
+        return None
+
+    def update_equipment_cache(self, equipment_list: List[Equipment]) -> List[Dict[str, Any]]:
+        """Update the equipment cache with fresh data.
+
+        Args:
+            equipment_list: List of equipment objects
+
+        Returns:
+            Cached equipment data
+        """
+        global _equipment_cache
+
+        cache_data = []
+        for eq in equipment_list:
+            cache_data.append({
+                "id": eq.id,
+                "name": eq.name,
+                "description": eq.description,
+                "location": eq.location,
+                "type_id": eq.type_id,
+                "is_active": eq.is_active,
+            })
+
+        _equipment_cache["data"] = cache_data
+        _equipment_cache["timestamp"] = time.time()
+
+        return cache_data
+
+    def filter_equipment_by_specs(
+        self,
+        equipment_list: List[Equipment],
+        extracted_specs: Dict[str, List[Dict[str, Any]]],
+    ) -> Tuple[List[Equipment], Dict[str, Any]]:
+        """Filter equipment based on extracted specifications.
+
+        Stage 1 of the two-stage AI pipeline: pre-filter equipment by specs
+        before sending to AI for final matching.
+
+        Args:
+            equipment_list: Full list of equipment
+            extracted_specs: Specs extracted from prompt
+
+        Returns:
+            Tuple of (filtered equipment list, filter info)
+        """
+        if not extracted_specs:
+            return equipment_list, {"filtered": False, "reason": "No specs extracted"}
+
+        filtered = []
+        filter_info = {
+            "filtered": True,
+            "specs_used": list(extracted_specs.keys()),
+            "original_count": len(equipment_list),
+        }
+
+        for eq in equipment_list:
+            if not eq.description:
+                # Include equipment without description (can't filter)
+                filtered.append(eq)
+                continue
+
+            description_lower = eq.description.lower()
+            matches_any = False
+
+            # Check each extracted spec against equipment description
+            for spec_type, specs in extracted_specs.items():
+                for spec in specs:
+                    # Look for the raw value or normalized patterns in description
+                    raw_value = spec["raw"].lower()
+                    if raw_value in description_lower:
+                        matches_any = True
+                        break
+
+                    # Also check for numeric patterns
+                    value = spec["value"]
+                    unit = spec["unit"]
+
+                    # Build pattern to match in description
+                    patterns = [
+                        f"{value}\\s*{unit}",
+                        f"{int(value)}\\s*{unit}" if value == int(value) else None,
+                    ]
+                    patterns = [p for p in patterns if p]
+
+                    for pattern in patterns:
+                        if re.search(pattern, eq.description, re.IGNORECASE):
+                            matches_any = True
+                            break
+
+                if matches_any:
+                    break
+
+            if matches_any:
+                filtered.append(eq)
+
+        filter_info["filtered_count"] = len(filtered)
+
+        # If filtering removed all equipment, fall back to full list
+        if not filtered:
+            return equipment_list, {
+                "filtered": False,
+                "reason": "No equipment matched specs, using full list",
+            }
+
+        return filtered, filter_info
 
     def _build_system_prompt(self, rules: List[AISpecificationRule]) -> str:
         """Build system prompt from specification rules."""
@@ -172,19 +437,48 @@ class AIService:
         db: Session,
         user: User,
     ) -> Dict[str, Any]:
-        """Analyze booking request and return recommendations."""
+        """Analyze booking request and return recommendations.
+
+        Uses a two-stage pipeline:
+        1. Extract specs from prompt and pre-filter equipment
+        2. Send filtered list to AI for final recommendations
+
+        Also includes availability checking for recommended equipment.
+        """
+        # Stage 1: Extract specifications from prompt
+        extracted_specs = self.spec_extractor.extract_specs(prompt)
+
+        # Stage 1.5: Pre-filter equipment by extracted specs
+        filtered_equipment, filter_info = self.filter_equipment_by_specs(
+            equipment_list, extracted_specs
+        )
+
+        # Update cache with equipment list
+        self.update_equipment_cache(equipment_list)
+
+        # Build prompts for Stage 2
         system_prompt = self._build_system_prompt(rules)
-        equipment_context = self._build_equipment_context(equipment_list)
+        equipment_context = self._build_equipment_context(filtered_equipment)
 
-        user_prompt = f"""User request: {prompt}
+        # Include extracted specs in the prompt for better AI matching
+        specs_info = ""
+        if extracted_specs:
+            specs_parts = []
+            for spec_type, specs in extracted_specs.items():
+                for spec in specs:
+                    specs_parts.append(f"- {spec_type}: {spec['raw']}")
+            specs_info = f"\n\nExtracted requirements:\n" + "\n".join(specs_parts)
 
-Available equipment:
+        user_prompt = f"""User request: {prompt}{specs_info}
+
+Available equipment (pre-filtered based on specifications):
 {equipment_context}
 
 Please recommend the most suitable equipment for this request.
+Consider the technical specifications and match them to equipment capabilities.
 Respond with a JSON array of recommendations."""
 
-        # Call Ollama
+        # Stage 2: Call Ollama for AI-based matching
         response = self.client.chat(
             model=self.settings.ai.model,
             messages=[
@@ -200,17 +494,25 @@ Respond with a JSON array of recommendations."""
         response_text = response.get("message", {}).get("content", "")
 
         # Parse recommendations
-        recommendations = self._parse_recommendations(response_text, equipment_list)
+        recommendations = self._parse_recommendations(response_text, filtered_equipment)
 
-        # Add availability info
+        # Add availability info for each recommendation
         for rec in recommendations:
             eq_id = rec.get("equipment_id")
             if eq_id:
+                # Check availability for requested dates
                 if preferred_start and preferred_end:
                     conflicts = self._check_availability(db, eq_id, preferred_start, preferred_end)
                     rec["conflicts"] = conflicts
                     rec["available"] = len(conflicts) == 0
 
+                    # If not available, find alternative dates
+                    if not rec["available"]:
+                        rec["alternative_dates"] = self._find_alternative_dates(
+                            db, eq_id, preferred_start, preferred_end
+                        )
+
+                # Always include available slots
                 rec["available_slots"] = self._find_available_slots(
                     db, eq_id, preferred_start, preferred_end
                 )
@@ -222,9 +524,80 @@ Respond with a JSON array of recommendations."""
         return {
             "recommendations": recommendations,
             "reasoning": response_text,
+            "extracted_specs": extracted_specs,
+            "filter_info": filter_info,
             "input_tokens": input_tokens * 2,  # Rough estimate
             "output_tokens": output_tokens * 2,
         }
+
+    def _find_alternative_dates(
+        self,
+        db: Session,
+        equipment_id: int,
+        preferred_start: date,
+        preferred_end: date,
+        search_range_days: int = 30,
+    ) -> List[Dict[str, Any]]:
+        """Find alternative available dates when preferred dates are unavailable.
+
+        Args:
+            db: Database session
+            equipment_id: Equipment ID
+            preferred_start: Preferred start date
+            preferred_end: Preferred end date
+            search_range_days: How far ahead to search
+
+        Returns:
+            List of alternative date ranges
+        """
+        duration = (preferred_end - preferred_start).days + 1
+        alternatives = []
+
+        # Search forward from preferred dates
+        search_start = preferred_end + timedelta(days=1)
+        search_end = search_start + timedelta(days=search_range_days)
+
+        # Get all bookings in search range
+        bookings = (
+            db.query(Booking)
+            .filter(
+                Booking.equipment_id == equipment_id,
+                Booking.status == "active",
+                Booking.start_date <= search_end,
+                Booking.end_date >= search_start,
+            )
+            .order_by(Booking.start_date)
+            .all()
+        )
+
+        # Find gaps that can fit the requested duration
+        current = search_start
+
+        for booking in bookings:
+            gap_days = (booking.start_date - current).days
+            if gap_days >= duration:
+                alternatives.append({
+                    "start_date": current.isoformat(),
+                    "end_date": (current + timedelta(days=duration - 1)).isoformat(),
+                    "days_from_preferred": (current - preferred_start).days,
+                })
+
+            current = booking.end_date + timedelta(days=1)
+
+            if len(alternatives) >= 3:
+                break
+
+        # Check remaining space after last booking
+        if len(alternatives) < 3 and current <= search_end:
+            remaining_days = (search_end - current).days + 1
+            if remaining_days >= duration:
+                alternatives.append({
+                    "start_date": current.isoformat(),
+                    "end_date": (current + timedelta(days=duration - 1)).isoformat(),
+                    "days_from_preferred": (current - preferred_start).days,
+                })
+
+        return alternatives[:3]
 
     def _parse_recommendations(
         self,

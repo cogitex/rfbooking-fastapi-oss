@@ -18,7 +18,7 @@
 
 from fastapi import APIRouter
 
-from app.routes import auth, equipment, bookings, admin, manager, reports, ai_assistant, pages
+from app.routes import auth, equipment, bookings, admin, manager, reports, ai_assistant, pages, setup
 
 # Create main API router
 api_router = APIRouter()
@@ -31,6 +31,7 @@ api_router.include_router(admin.router, tags=["Admin"])
 api_router.include_router(manager.router, tags=["Manager"])
 api_router.include_router(reports.router, tags=["Reports"])
 api_router.include_router(ai_assistant.router, tags=["AI Assistant"])
+api_router.include_router(setup.router, tags=["Setup"])
 
 # Page routes (HTML templates)
 pages_router = pages.router

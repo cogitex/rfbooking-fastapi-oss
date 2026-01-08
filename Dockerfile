@@ -35,6 +35,9 @@ RUN mkdir -p /data
 # Create config directory
 RUN mkdir -p /app/config
 
+# Copy example config to root (won't be hidden by volume mount)
+RUN cp /app/config/config.example.yaml /app/config.example.yaml
+
 # Copy supervisor config
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 

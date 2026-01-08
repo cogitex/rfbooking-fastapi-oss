@@ -4,37 +4,56 @@
 #
 # Copy this file to config.yaml and modify as needed
 
-# Application settings
-app:
-  name: "RFBooking"
-  secret_key: "change-this-to-a-random-secret-key-at-least-32-characters"
-  debug: false
-  host: "0.0.0.0"
-  port: 8000
-  base_url: "http://localhost:8000"  # Used for magic links
-
-# Admin user (created on first startup)
-admin:
-  email: "admin@example.com"
-  name: "Administrator"
+# ============================================================================
+# REQUIRED SETTINGS - You MUST change these before first use
+# ============================================================================
 
 # Organization settings
 organization:
-  name: "My Organization"
+  name: "My Organization"            # CHANGE: Your company/organization name
   work_day_start: "08:00"
   work_day_end: "18:00"
 
+# Admin user (created on first startup)
+admin:
+  email: "admin@example.com"         # CHANGE: Your administrator email address
+  name: "Administrator"              # CHANGE: Administrator display name
+
+# Email settings (required for passwordless authentication)
+email:
+  provider: "smtp"                   # "smtp" or "resend"
+  from_address: "noreply@example.com"  # CHANGE: Your sender email address
+  from_name: "RFBooking System"
+  # SMTP settings (used when provider="smtp")
+  smtp_host: "smtp.example.com"      # CHANGE: Your SMTP server
+  smtp_port: 587
+  smtp_username: ""                  # CHANGE: SMTP username (if required)
+  smtp_password: ""                  # CHANGE: SMTP password (if required)
+  smtp_use_tls: true                 # STARTTLS (port 587)
+  smtp_use_ssl: false                # SSL/TLS (port 465)
+  # Resend settings (used when provider="resend")
+  api_key: ""                        # Your Resend API key
+
+# ============================================================================
+# AUTOMATIC SETTINGS - Usually auto-configured, change if needed
+# ============================================================================
+
+# Application settings
+app:
+  name: "RFBooking"
+  debug: false
+  host: "0.0.0.0"
+  port: 8000
+  base_url: "http://localhost:8000"  # Auto-detected during setup
+  setup_completed: false             # Set to true after initial setup wizard
+
 # Database settings
 database:
-  path: "/data/rfbooking.db"  # SQLite database path
+  path: "/data/rfbooking.db"         # SQLite database path
 
-# Email settings (optional)
-email:
-  enabled: false  # Set to true to enable email notifications
-  provider: "resend"
-  api_key: ""  # Your Resend API key
-  from_address: "noreply@example.com"
-  from_name: "RFBooking System"
+# ============================================================================
+# OPTIONAL SETTINGS - Defaults work for most installations
+# ============================================================================
 
 # AI Assistant settings
 ai:
@@ -46,10 +65,10 @@ ai:
 
 # Security settings
 security:
-  auth_token_days: 30  # How long auth tokens are valid
-  magic_link_minutes: 15  # How long magic links are valid
-  max_tokens_per_user: 10  # Maximum active sessions per user
-  csrf_enabled: true  # Enable CSRF protection
+  auth_token_days: 30                # How long auth tokens are valid
+  magic_link_minutes: 15             # How long magic links are valid
+  max_tokens_per_user: 10            # Maximum active sessions per user
+  csrf_enabled: true                 # Enable CSRF protection
 
 # Rate limiting
 rate_limit:
@@ -59,13 +78,23 @@ rate_limit:
 # Booking constraints
 booking:
   max_duration_days: 30
-  max_description_length: 10240  # 10KB
-  reminder_hours: 24  # Send reminder X hours before booking
-  calibration_reminder_days: 7  # Send calibration reminder X days before
+  max_description_length: 10240      # 10KB
+  reminder_hours: 24                 # Send reminder X hours before booking
+  calibration_reminder_days: 7       # Send calibration reminder X days before
+  short_notice_days: 8               # Alert managers when booking cancelled within X days
+
+# Notification settings
+notification:
+  working_hours_start: "09:00"       # UTC - only send non-urgent emails after this
+  working_hours_end: "17:00"         # UTC - only send non-urgent emails before this
+  enforce_working_hours: true        # Queue emails outside working hours
+  urgent_types:                      # These bypass working hours
+    - "booking_cancellation"
+    - "short_notice_cancellation"
 
 # Cleanup settings
 cleanup:
-  auth_token_retention_days: 7  # Keep expired tokens for X days
-  magic_link_retention_days: 7  # Keep used magic links for X days
-  ai_query_log_retention_days: 7  # Keep AI query logs for X days
+  auth_token_retention_days: 7       # Keep expired tokens for X days
+  magic_link_retention_days: 7       # Keep used magic links for X days
+  ai_query_log_retention_days: 7     # Keep AI query logs for X days
   notification_log_retention_days: 30  # Keep notification logs for X days

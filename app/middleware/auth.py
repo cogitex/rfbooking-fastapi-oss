@@ -26,7 +26,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.database import get_db
-from app.models.auth import AuthToken
+from app.models.auth import AuthToken, SystemSettings
 from app.models.user import User
 
 
@@ -43,6 +43,50 @@ def get_token_from_request(request: Request) -> Optional[str]:
         return auth_header[7:]
 
     return None
+
+
+def check_service_mode(db: Session) -> dict:
+    """Check if service mode (maintenance mode) is enabled.
+
+    Returns dict with 'enabled' and 'message' keys.
+    """
+    enabled_setting = db.query(SystemSettings).filter(
+        SystemSettings.setting_key == "service_mode_enabled"
+    ).first()
+
+    if not enabled_setting or enabled_setting.setting_value != "true":
+        return {"enabled": False, "message": None}
+
+    message_setting = db.query(SystemSettings).filter(
+        SystemSettings.setting_key == "service_mode_message"
+    ).first()
+
+    return {
+        "enabled": True,
+        "message": message_setting.setting_value if message_setting else "System is under maintenance. Please try again later.",
+    }
+
+
+def check_demo_mode() -> bool:
+    """Check if demo mode is enabled.
+
+    Returns True if demo mode is active.
+    """
+    settings = get_settings()
+    return settings.app.demo_mode
+
+
+def require_write_access():
+    """Dependency that blocks write operations in demo mode.
+
+    Use this dependency on POST/PUT/DELETE endpoints that should be
+    blocked in demo mode.
+    """
+    if check_demo_mode():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This action is not available in demo mode. This is a read-only demonstration instance.",
+        )
 
 
 async def get_current_user(
@@ -94,6 +138,15 @@ async def get_current_user(
     # Update last used timestamp
     auth_token.last_used_at = datetime.utcnow()
     db.commit()
+
+    # Check service mode - only admins can access during maintenance
+    if not user.is_admin:
+        service_mode = check_service_mode(db)
+        if service_mode["enabled"]:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=service_mode["message"],
+            )
 
     return user
 

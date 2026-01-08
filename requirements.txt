@@ -30,6 +30,7 @@ ollama>=0.1.0
 
 # Email
 resend>=0.7.0
+aiosmtplib>=3.0.0
 
 # Scheduling
 apscheduler>=3.10.0

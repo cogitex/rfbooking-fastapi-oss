@@ -1,0 +1,542 @@
+<!-- RFBooking FastAPI OSS - Self-hosted Equipment Booking System -->
+<!-- Copyright (C) 2025 Oleg Tokmakov -->
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+{% extends "base.html" %}
+
+{% block title %}{{ app_name }} - Setup{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800">
+    <!-- Navigation -->
+    <nav class="container mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+            <div class="text-white text-2xl font-bold">{{ app_name }}</div>
+            {% if not needs_setup %}
+            <a href="/" class="text-white hover:text-blue-200 transition">
+                Back to Home
+            </a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Setup Content -->
+    <div class="container mx-auto px-6 py-8">
+        <div class="max-w-2xl mx-auto">
+            {% if needs_setup %}
+            <!-- SETUP WIZARD -->
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Welcome to {{ app_name }}</h1>
+                <p class="text-gray-600 mb-6">Let's configure your booking system. This will only take a minute.</p>
+
+                <!-- Progress Steps -->
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center">
+                        <div id="step1-indicator" class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
+                        <span class="ml-2 text-sm font-medium text-gray-700">Organization</span>
+                    </div>
+                    <div class="flex-1 h-1 bg-gray-200 mx-4"><div id="progress-1-2" class="h-1 bg-blue-600 w-0 transition-all duration-300"></div></div>
+                    <div class="flex items-center">
+                        <div id="step2-indicator" class="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">2</div>
+                        <span class="ml-2 text-sm font-medium text-gray-500">Admin</span>
+                    </div>
+                    <div class="flex-1 h-1 bg-gray-200 mx-4"><div id="progress-2-3" class="h-1 bg-blue-600 w-0 transition-all duration-300"></div></div>
+                    <div class="flex items-center">
+                        <div id="step3-indicator" class="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">3</div>
+                        <span class="ml-2 text-sm font-medium text-gray-500">Email</span>
+                    </div>
+                </div>
+
+                <!-- Step 1: Organization -->
+                <div id="step1" class="step-content">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Organization Settings</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Organization Name *</label>
+                            <input type="text" id="org_name" value="{{ current_config.organization_name }}"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="My Company">
+                            <p class="text-sm text-gray-500 mt-1">This will appear in emails and the interface</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Work Day Start</label>
+                                <input type="time" id="work_start" value="{{ current_config.work_day_start }}"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Work Day End</label>
+                                <input type="time" id="work_end" value="{{ current_config.work_day_end }}"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end mt-6">
+                        <button onclick="goToStep(2)" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            Next
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Admin Account -->
+                <div id="step2" class="step-content hidden">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Administrator Account</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Admin Email *</label>
+                            <input type="email" id="admin_email" value="{{ current_config.admin_email }}"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="admin@yourcompany.com">
+                            <p class="text-sm text-gray-500 mt-1">You'll use this email to log in</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Admin Name</label>
+                            <input type="text" id="admin_name" value="{{ current_config.admin_name }}"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="Administrator">
+                        </div>
+                    </div>
+                    <div class="flex justify-between mt-6">
+                        <button onclick="goToStep(1)" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                            Back
+                        </button>
+                        <button onclick="goToStep(3)" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            Next
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Email Configuration -->
+                <div id="step3" class="step-content hidden">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Email Configuration</h2>
+                    <p class="text-gray-600 mb-4">Email is required for passwordless authentication (magic links).</p>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email Provider</label>
+                            <select id="email_provider" onchange="toggleEmailProvider()"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="smtp" {{ 'selected' if current_config.email_provider == 'smtp' else '' }}>SMTP Server</option>
+                                <option value="resend" {{ 'selected' if current_config.email_provider == 'resend' else '' }}>Resend API</option>
+                            </select>
+                        </div>
+
+                        <!-- SMTP Settings -->
+                        <div id="smtp_settings" class="space-y-4">
+                            <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 mb-2">
+                                Use your organization's mail server or a transactional email service.
+                                <p class="mt-1 text-gray-500"><strong>Note:</strong> Consumer email providers (Gmail, Outlook.com, Yahoo) are not recommended for production use due to sending limits and authentication restrictions.</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">From Email Address *</label>
+                                <input type="email" id="smtp_from_address"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="booking@yourcompany.com">
+                                <p class="text-sm text-gray-500 mt-1">Email address that will appear as the sender</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">SMTP Host *</label>
+                                    <input type="text" id="smtp_host" value="{{ current_config.smtp_host }}"
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                           placeholder="smtp.yourcompany.com">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">SMTP Port</label>
+                                    <input type="number" id="smtp_port" value="{{ current_config.smtp_port }}"
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                           placeholder="587">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">SMTP Username</label>
+                                <input type="text" id="smtp_username" value="{{ current_config.smtp_username }}"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="username or email">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">SMTP Password</label>
+                                <input type="password" id="smtp_password"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="Your password or app password">
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="smtp_use_tls" {{ 'checked' if current_config.smtp_use_tls else '' }}
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label for="smtp_use_tls" class="ml-2 text-sm text-gray-700">Use TLS (recommended for port 587)</label>
+                            </div>
+                        </div>
+
+                        <!-- Resend Settings -->
+                        <div id="resend_settings" class="space-y-4 hidden">
+                            <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 mb-2">
+                                <strong>Important:</strong> Before using Resend, you must:
+                                <ol class="list-decimal ml-5 mt-1">
+                                    <li>Register your domain in the <a href="https://resend.com/domains" target="_blank" class="text-blue-600 hover:underline">Resend Dashboard</a></li>
+                                    <li>Add the required DNS records (SPF, DKIM)</li>
+                                    <li>Wait for domain verification to complete</li>
+                                </ol>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Resend API Key *</label>
+                                <input type="password" id="resend_api_key"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="re_xxxxx">
+                                <p class="text-sm text-gray-500 mt-1">Get your API key from <a href="https://resend.com/api-keys" target="_blank" class="text-blue-600 hover:underline">resend.com/api-keys</a></p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">From Email Address *</label>
+                                <input type="email" id="resend_from_address"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="booking@yourverifieddomain.com">
+                                <p class="text-sm text-gray-500 mt-1">Must be an address from your verified domain in Resend</p>
+                            </div>
+                        </div>
+
+                        <!-- Test Email Button -->
+                        <div class="pt-4 border-t">
+                            <button onclick="testEmail()" id="test_email_btn"
+                                    class="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition">
+                                Test Email Configuration
+                            </button>
+                            <span id="test_email_result" class="ml-4 text-sm"></span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between mt-6">
+                        <button onclick="goToStep(2)" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                            Back
+                        </button>
+                        <button onclick="saveConfiguration()" id="save_btn"
+                                class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                            Save & Start
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Error/Success Messages -->
+                <div id="message_area" class="mt-4 hidden">
+                    <div id="error_message" class="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 hidden"></div>
+                    <div id="success_message" class="p-4 bg-green-50 border-l-4 border-green-500 text-green-700 hidden"></div>
+                </div>
+            </div>
+
+            {% else %}
+            <!-- ALREADY CONFIGURED - Show Downloads -->
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">Setup Complete</h1>
+                    <p class="text-gray-600">Your RFBooking system is configured and ready to use.</p>
+                </div>
+
+                <div class="flex justify-center space-x-4 mb-8">
+                    <a href="/login" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        Go to Login
+                    </a>
+                    <a href="/" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                        Home Page
+                    </a>
+                </div>
+
+                <!-- Downloads Section -->
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Management Tools</h3>
+                    <p class="text-gray-600 mb-4">Download these files for server management:</p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <a href="/setup/download/rfbctl.sh"
+                           class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                            <svg class="w-8 h-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <div>
+                                <div class="font-medium text-gray-800">rfbctl.sh</div>
+                                <div class="text-sm text-gray-500">Linux/Mac management script</div>
+                            </div>
+                        </a>
+                        <a href="/setup/download/rfbctl.bat"
+                           class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                            <svg class="w-8 h-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <div>
+                                <div class="font-medium text-gray-800">rfbctl.bat</div>
+                                <div class="text-sm text-gray-500">Windows management script</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Commands Reference -->
+                <div class="border-t pt-6 mt-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Management Commands</h3>
+                    <div class="bg-gray-900 text-gray-100 rounded-lg p-4 font-mono text-sm overflow-x-auto">
+                        <div class="text-gray-400 mb-2"># Linux/Mac</div>
+                        <div>./rfbctl.sh status &nbsp;&nbsp;<span class="text-gray-500"># Check service status</span></div>
+                        <div>./rfbctl.sh logs &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-gray-500"># View container logs</span></div>
+                        <div>./rfbctl.sh restart &nbsp;<span class="text-gray-500"># Restart services</span></div>
+                        <div>./rfbctl.sh backup &nbsp;&nbsp;<span class="text-gray-500"># Backup database</span></div>
+                        <div class="text-gray-400 mt-4 mb-2"># Windows (double-click or run in PowerShell)</div>
+                        <div>rfbctl.bat</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-6 text-center">
+            <p class="mb-2">{{ app_name }} - Open Source Equipment Booking System</p>
+            <p class="text-gray-400 text-sm">
+                Licensed under AGPLv3 | &copy; 2025 Oleg Tokmakov
+            </p>
+        </div>
+    </footer>
+</div>
+
+<script>
+let currentStep = 1;
+
+function goToStep(step) {
+    // Validate current step before proceeding
+    if (step > currentStep && !validateStep(currentStep)) {
+        return;
+    }
+
+    // Hide all steps
+    document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+
+    // Show target step
+    document.getElementById('step' + step).classList.remove('hidden');
+
+    // Update indicators
+    for (let i = 1; i <= 3; i++) {
+        const indicator = document.getElementById('step' + i + '-indicator');
+        if (i < step) {
+            indicator.className = 'w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold';
+        } else if (i === step) {
+            indicator.className = 'w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold';
+        } else {
+            indicator.className = 'w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold';
+        }
+    }
+
+    // Update progress bars
+    document.getElementById('progress-1-2').style.width = step > 1 ? '100%' : '0';
+    document.getElementById('progress-2-3').style.width = step > 2 ? '100%' : '0';
+
+    currentStep = step;
+}
+
+function validateStep(step) {
+    hideMessages();
+
+    if (step === 1) {
+        const orgName = document.getElementById('org_name').value.trim();
+        if (!orgName || orgName === 'My Organization') {
+            showError('Please enter your organization name');
+            return false;
+        }
+    } else if (step === 2) {
+        const email = document.getElementById('admin_email').value.trim();
+        if (!email || !email.includes('@') || email === 'admin@example.com') {
+            showError('Please enter a valid admin email address');
+            return false;
+        }
+    }
+    return true;
+}
+
+function toggleEmailProvider() {
+    const provider = document.getElementById('email_provider').value;
+    document.getElementById('smtp_settings').classList.toggle('hidden', provider !== 'smtp');
+    document.getElementById('resend_settings').classList.toggle('hidden', provider !== 'resend');
+}
+
+function showError(message) {
+    const area = document.getElementById('message_area');
+    const errorEl = document.getElementById('error_message');
+    area.classList.remove('hidden');
+    errorEl.classList.remove('hidden');
+    errorEl.textContent = message;
+    document.getElementById('success_message').classList.add('hidden');
+}
+
+function showSuccess(message) {
+    const area = document.getElementById('message_area');
+    const successEl = document.getElementById('success_message');
+    area.classList.remove('hidden');
+    successEl.classList.remove('hidden');
+    successEl.textContent = message;
+    document.getElementById('error_message').classList.add('hidden');
+}
+
+function hideMessages() {
+    document.getElementById('message_area').classList.add('hidden');
+    document.getElementById('error_message').classList.add('hidden');
+    document.getElementById('success_message').classList.add('hidden');
+}
+
+function getCSRFToken() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrf_token') {
+            return value;
+        }
+    }
+    return '';
+}
+
+async function testEmail() {
+    const btn = document.getElementById('test_email_btn');
+    const result = document.getElementById('test_email_result');
+
+    btn.disabled = true;
+    btn.textContent = 'Testing...';
+    result.textContent = '';
+    result.className = 'ml-4 text-sm';
+
+    const config = collectConfig();
+
+    try {
+        const response = await fetch('/api/setup/test-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': getCSRFToken()
+            },
+            body: JSON.stringify(config)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            result.textContent = 'Email sent successfully!';
+            result.className = 'ml-4 text-sm text-green-600';
+        } else {
+            result.textContent = data.detail || 'Email test failed';
+            result.className = 'ml-4 text-sm text-red-600';
+        }
+    } catch (error) {
+        result.textContent = 'Connection error';
+        result.className = 'ml-4 text-sm text-red-600';
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Test Email Configuration';
+}
+
+function collectConfig() {
+    const provider = document.getElementById('email_provider').value;
+    let fromAddress = '';
+
+    if (provider === 'smtp') {
+        fromAddress = document.getElementById('smtp_from_address').value.trim();
+    } else {
+        fromAddress = document.getElementById('resend_from_address').value.trim();
+    }
+
+    return {
+        organization: {
+            name: document.getElementById('org_name').value.trim(),
+            work_day_start: document.getElementById('work_start').value,
+            work_day_end: document.getElementById('work_end').value
+        },
+        admin: {
+            email: document.getElementById('admin_email').value.trim(),
+            name: document.getElementById('admin_name').value.trim() || 'Administrator'
+        },
+        email: {
+            provider: provider,
+            from_address: fromAddress,
+            smtp_host: document.getElementById('smtp_host').value.trim(),
+            smtp_port: parseInt(document.getElementById('smtp_port').value) || 587,
+            smtp_username: document.getElementById('smtp_username').value.trim(),
+            smtp_password: document.getElementById('smtp_password').value,
+            smtp_use_tls: document.getElementById('smtp_use_tls').checked,
+            api_key: document.getElementById('resend_api_key')?.value || ''
+        }
+    };
+}
+
+async function saveConfiguration() {
+    if (!validateStep(3)) {
+        return;
+    }
+
+    const provider = document.getElementById('email_provider').value;
+    if (provider === 'smtp') {
+        const fromAddress = document.getElementById('smtp_from_address').value.trim();
+        if (!fromAddress || !fromAddress.includes('@')) {
+            showError('Please enter a valid From Email Address');
+            return;
+        }
+        const host = document.getElementById('smtp_host').value.trim();
+        if (!host || host === 'smtp.example.com') {
+            showError('Please enter a valid SMTP host');
+            return;
+        }
+    } else {
+        const apiKey = document.getElementById('resend_api_key').value.trim();
+        if (!apiKey) {
+            showError('Please enter your Resend API key');
+            return;
+        }
+        const fromAddress = document.getElementById('resend_from_address').value.trim();
+        if (!fromAddress || !fromAddress.includes('@')) {
+            showError('Please enter a valid From Email Address for your verified domain');
+            return;
+        }
+    }
+
+    const btn = document.getElementById('save_btn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    hideMessages();
+
+    const config = collectConfig();
+
+    try {
+        const response = await fetch('/api/setup/configure', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': getCSRFToken()
+            },
+            body: JSON.stringify(config)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showSuccess('Configuration saved! Restarting services...');
+            btn.textContent = 'Restarting...';
+
+            // Wait for restart and redirect
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 3000);
+        } else {
+            showError(data.detail || 'Failed to save configuration');
+            btn.disabled = false;
+            btn.textContent = 'Save & Start';
+        }
+    } catch (error) {
+        showError('Connection error. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Save & Start';
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    toggleEmailProvider();
+});
+</script>
+{% endblock %}

@@ -1,18 +1,30 @@
 # RFBooking FastAPI OSS - Self-hosted Equipment Booking System
 # Copyright (C) 2025 Oleg Tokmakov
 # SPDX-License-Identifier: AGPL-3.0-or-later
-
-version: '3.8'
+#
+# INSTALLATION:
+# 1. Place this file in your installation directory (e.g., C:\rfbooking or ~/rfbooking)
+# 2. Run: docker-compose up -d
+# 3. Open: http://localhost:8000
+#
+# DATA LOCATIONS:
+# - Database: ./data/rfbooking.db
+# - Config:   ./config/config.yaml
+#
+# CUSTOM PATHS (optional):
+# Set environment variables before running docker-compose:
+#   RFBOOKING_DATA=/custom/path/data docker-compose up -d
 
 services:
   rfbooking:
+    image: rfbooking-fastapi-oss:latest
     build: .
     container_name: rfbooking
     ports:
-      - "8000:8000"
+      - "${RFBOOKING_PORT:-8000}:8000"
     volumes:
-      - ./data:/data
-      - ./config:/app/config
+      - ${RFBOOKING_DATA:-./data}:/data
+      - ${RFBOOKING_CONFIG_DIR:-./config}:/app/config
       - ollama-data:/root/.ollama
     environment:
       - RFBOOKING_CONFIG=/app/config/config.yaml

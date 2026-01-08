@@ -6,12 +6,12 @@
 {% block title %}{{ app_name }} - Equipment Booking System{% endblock %}
 
 {% block body %}
-<div class="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800">
+<div class="min-h-screen bg-gradient-to-br from-orange-600 to-orange-800">
     <!-- Navigation -->
     <nav class="container mx-auto px-6 py-4">
         <div class="flex items-center justify-between">
             <div class="text-white text-2xl font-bold">{{ app_name }}</div>
-            <a href="/login" class="bg-white text-blue-600 px-6 py-2 rounded-lg font-semibold hover:bg-blue-50 transition">
+            <a href="/login" class="bg-white text-orange-600 px-6 py-2 rounded-lg font-semibold hover:bg-orange-50 transition">
                 Sign In
             </a>
         </div>
@@ -19,18 +19,24 @@
 
     <!-- Hero Section -->
     <div class="container mx-auto px-6 py-20">
-        <div class="text-center text-white">
-            <h1 class="text-5xl font-bold mb-6">Equipment Booking Made Simple</h1>
-            <p class="text-xl mb-8 text-blue-100">
-                Self-hosted booking system with AI-powered equipment recommendations
-            </p>
-            <div class="flex justify-center space-x-4">
-                <a href="/login" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold text-lg hover:bg-blue-50 transition">
-                    Get Started
-                </a>
-                <a href="https://github.com/otokmakov/rfbooking-fastapi-oss" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold text-lg hover:bg-white hover:text-blue-600 transition">
-                    View Source
-                </a>
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div class="text-white">
+                <h1 class="text-5xl font-bold mb-6">Equipment Booking Made Simple</h1>
+                <p class="text-xl mb-8 text-orange-100">
+                    Self-hosted booking system with AI-powered equipment recommendations
+                </p>
+                <div class="flex space-x-4">
+                    <a href="/login" class="bg-white text-orange-600 px-8 py-3 rounded-lg font-semibold text-lg hover:bg-orange-50 transition">
+                        Get Started
+                    </a>
+                    <a href="/setup" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold text-lg hover:bg-white hover:text-orange-600 transition">
+                        Setup Guide
+                    </a>
+                </div>
+            </div>
+            <!-- Mobius Animation -->
+            <div class="flex justify-center">
+                <canvas id="mobius-canvas" width="400" height="400" class="max-w-full"></canvas>
             </div>
         </div>
     </div>
@@ -42,8 +48,8 @@
             <div class="grid md:grid-cols-3 gap-8">
                 <!-- Feature 1 -->
                 <div class="bg-gray-50 p-6 rounded-lg">
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                     </div>
@@ -53,8 +59,8 @@
 
                 <!-- Feature 2 -->
                 <div class="bg-gray-50 p-6 rounded-lg">
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                         </svg>
                     </div>
@@ -64,8 +70,8 @@
 
                 <!-- Feature 3 -->
                 <div class="bg-gray-50 p-6 rounded-lg">
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
                     </div>
@@ -86,4 +92,104 @@
         </div>
     </footer>
 </div>
+
+<!-- Mobius Strip Animation -->
+<script>
+(function() {
+    const canvas = document.getElementById('mobius-canvas');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    let rotation = 0;
+    const strips = 60;
+    const radius = 120;
+    const tubeRadius = 30;
+
+    function getMobiusPoint(u, v, rot) {
+        // Mobius strip parametric equations
+        const halfTwist = u / 2;
+        const x = (radius + v * Math.cos(halfTwist)) * Math.cos(u + rot);
+        const y = (radius + v * Math.cos(halfTwist)) * Math.sin(u + rot);
+        const z = v * Math.sin(halfTwist);
+        return { x, y, z };
+    }
+
+    function project(point) {
+        // Simple perspective projection
+        const scale = 300 / (300 + point.z);
+        return {
+            x: centerX + point.x * scale,
+            y: centerY + point.y * scale * 0.6,
+            z: point.z,
+            scale: scale
+        };
+    }
+
+    function getColor(z, scale) {
+        // Orange/amber gradient based on depth
+        const brightness = Math.floor(150 + z * 0.5 + scale * 50);
+        const red = Math.min(255, Math.max(150, brightness + 60));
+        const green = Math.min(180, Math.max(80, brightness - 30));
+        const blue = Math.min(80, Math.max(20, brightness - 100));
+        return `rgb(${red}, ${green}, ${blue})`;
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, width, height);
+
+        const segments = [];
+
+        // Generate strip segments
+        for (let i = 0; i < strips; i++) {
+            const u = (i / strips) * Math.PI * 2;
+            const uNext = ((i + 1) / strips) * Math.PI * 2;
+
+            const points = [
+                getMobiusPoint(u, -tubeRadius, rotation),
+                getMobiusPoint(u, tubeRadius, rotation),
+                getMobiusPoint(uNext, tubeRadius, rotation),
+                getMobiusPoint(uNext, -tubeRadius, rotation)
+            ];
+
+            const projected = points.map(project);
+            const avgZ = points.reduce((sum, p) => sum + p.z, 0) / 4;
+
+            segments.push({
+                points: projected,
+                z: avgZ,
+                scale: projected[0].scale
+            });
+        }
+
+        // Sort by depth (painter's algorithm)
+        segments.sort((a, b) => a.z - b.z);
+
+        // Draw segments
+        for (const seg of segments) {
+            ctx.beginPath();
+            ctx.moveTo(seg.points[0].x, seg.points[0].y);
+            for (let i = 1; i < seg.points.length; i++) {
+                ctx.lineTo(seg.points[i].x, seg.points[i].y);
+            }
+            ctx.closePath();
+
+            ctx.fillStyle = getColor(seg.z, seg.scale);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+        }
+
+        rotation += 0.008;
+        requestAnimationFrame(draw);
+    }
+
+    draw();
+})();
+</script>
 {% endblock %}

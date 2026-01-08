@@ -294,11 +294,15 @@ async def create_booking(
     db.commit()
     db.refresh(booking)
 
-    # Queue notification (if email enabled)
-    from app.services.notifications import queue_booking_notification
+    # Queue notifications (if email enabled)
+    from app.services.notifications import (
+        queue_booking_notification,
+        queue_manager_new_booking_notification,
+    )
 
     try:
         queue_booking_notification(db, booking, "created")
+        queue_manager_new_booking_notification(db, booking)
     except Exception as e:
         print(f"Failed to queue notification: {e}")
 
@@ -492,11 +496,15 @@ async def cancel_booking(
     booking.status = "cancelled"
     db.commit()
 
-    # Queue cancellation notification
-    from app.services.notifications import queue_booking_notification
+    # Queue cancellation notifications
+    from app.services.notifications import (
+        queue_booking_notification,
+        queue_short_notice_cancellation_alert,
+    )
 
     try:
         queue_booking_notification(db, booking, "cancelled")
+        queue_short_notice_cancellation_alert(db, booking)
     except Exception as e:
         print(f"Failed to queue cancellation notification: {e}")
 

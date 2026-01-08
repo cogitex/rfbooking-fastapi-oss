@@ -10,14 +10,24 @@ echo "  RFBooking FastAPI OSS"
 echo "  Self-hosted Equipment Booking System"
 echo "============================================"
 
-# Create log directory
+# Create required directories
 mkdir -p /var/log/supervisor
+mkdir -p /data
+mkdir -p /app/config
+
+# Set permissions for mounted directories
+chmod 755 /data 2>/dev/null || true
+chmod 755 /app/config 2>/dev/null || true
 
 # Copy example config if no config exists
 if [ ! -f /app/config/config.yaml ]; then
-    echo "No config file found, copying example config..."
-    cp /app/config/config.example.yaml /app/config/config.yaml
-    echo "Please update /app/config/config.yaml with your settings"
+    echo "No config file found, creating from template..."
+    # Use the copy stored outside the mounted volume
+    cp /app/config.example.yaml /app/config/config.yaml
+    echo ""
+    echo "  Initial setup required!"
+    echo "  Visit http://localhost:8000/setup to configure."
+    echo ""
 fi
 
 # Start supervisord in background
@@ -45,11 +55,33 @@ echo "Ollama is running!"
 # Pull model if not exists
 echo "Checking for Llama 3.1 8B model..."
 if ! ollama list | grep -q "llama3.1:8b"; then
-    echo "Downloading Llama 3.1 8B model (this may take a while on first run)..."
-    ollama pull llama3.1:8b
-    echo "Model downloaded successfully!"
+    echo "============================================"
+    echo "  DOWNLOADING AI MODEL"
+    echo "============================================"
+    echo "Model: Llama 3.1 8B"
+    echo "Size:  ~4.7 GB"
+    echo ""
+    echo "This is a one-time download. The model will"
+    echo "be cached for future container restarts."
+    echo ""
+    echo "Please wait..."
+    echo "============================================"
+
+    # Run ollama pull - it shows progress by default
+    if ollama pull llama3.1:8b; then
+        echo "============================================"
+        echo "  MODEL DOWNLOAD COMPLETE"
+        echo "============================================"
+    else
+        echo "============================================"
+        echo "  ERROR: Model download failed!"
+        echo "  Please check your internet connection"
+        echo "  and try restarting the container."
+        echo "============================================"
+        exit 1
+    fi
 else
-    echo "Llama 3.1 8B model already available"
+    echo "Llama 3.1 8B model already available (cached)"
 fi
 
 # Wait for FastAPI to start
@@ -69,8 +101,13 @@ done
 
 echo "============================================"
 echo "  RFBooking FastAPI OSS is ready!"
-echo "  Access the application at:"
-echo "  http://localhost:8000"
+echo "============================================"
+echo ""
+echo "  Open in browser: http://localhost:8000"
+echo ""
+echo "  First time? You will be redirected to the"
+echo "  setup wizard to configure your installation."
+echo ""
 echo "============================================"
 
 # Keep container running

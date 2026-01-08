@@ -39,6 +39,7 @@ async def lifespan(app: FastAPI):
 
     # Initialize settings
     config_path = os.environ.get("RFBOOKING_CONFIG")
+    print(f"Config path from RFBOOKING_CONFIG env: {config_path}")
     init_settings(config_path)
 
     # Initialize database

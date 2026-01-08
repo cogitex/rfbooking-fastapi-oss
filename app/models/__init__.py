@@ -17,7 +17,16 @@
 """Database models for RFBooking FastAPI OSS."""
 
 from app.models.user import Role, User
-from app.models.auth import AuthToken, MagicLink, CronJob, NotificationLog
+from app.models.auth import (
+    AuthToken,
+    MagicLink,
+    CronJob,
+    NotificationLog,
+    SystemSettings,
+    RegistrationSettings,
+    AllowedEmail,
+    AuditLog,
+)
 from app.models.equipment import (
     Equipment,
     EquipmentType,
@@ -36,6 +45,10 @@ __all__ = [
     "MagicLink",
     "CronJob",
     "NotificationLog",
+    "SystemSettings",
+    "RegistrationSettings",
+    "AllowedEmail",
+    "AuditLog",
     "Equipment",
     "EquipmentType",
     "EquipmentTypeUser",

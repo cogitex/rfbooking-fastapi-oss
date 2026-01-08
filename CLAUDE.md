@@ -8,15 +8,33 @@ Self-hosted Equipment Booking System with AI Assistant.
 
 ## Quick Start
 
+### Docker (Recommended)
+
 ```bash
-# Development
+# 1. Create installation directory and download docker-compose.yml
+mkdir rfbooking && cd rfbooking
+curl -O https://raw.githubusercontent.com/yourrepo/rfbooking-fastapi-oss/main/docker-compose.yml
+
+# 2. Start container (first run downloads AI model ~4.7GB)
+docker-compose up -d
+
+# 3. Open browser - you'll be redirected to setup wizard
+open http://localhost:8000
+```
+
+### Windows (Docker Desktop)
+
+1. Create folder: `C:\rfbooking`
+2. Download `docker-compose.yml` to that folder
+3. Right-click → Open with Docker Desktop, or run `docker-compose up -d`
+4. Open http://localhost:8000 - complete setup wizard
+
+### Development
+
+```bash
 cp config/config.example.yaml config/config.yaml
 pip install -r requirements.txt
 python -m app.main
-
-# Docker
-docker-compose up -d
-# First run downloads Llama 3.1 8B (~4.7GB)
 ```
 
 ---
@@ -45,11 +63,12 @@ rfbooking-fastapi-oss/
 │   │   ├── manager.py           # /api/manager/* endpoints
 │   │   ├── reports.py           # /api/reports/* endpoints
 │   │   ├── ai_assistant.py      # /api/ai/* endpoints
+│   │   ├── setup.py             # /api/setup/* endpoints (initial config)
 │   │   └── pages.py             # HTML page routes
 │   ├── services/
 │   │   ├── __init__.py
 │   │   ├── ai_service.py        # Ollama integration
-│   │   ├── email.py             # Resend API
+│   │   ├── email.py             # Email (SMTP or Resend)
 │   │   ├── notifications.py     # Notification queue
 │   │   └── scheduler.py         # APScheduler cron jobs
 │   ├── middleware/
@@ -62,7 +81,8 @@ rfbooking-fastapi-oss/
 │   ├── base.html
 │   ├── index.html               # Landing page
 │   ├── login.html               # Login form
-│   └── dashboard.html           # Main dashboard
+│   ├── dashboard.html           # Main dashboard
+│   └── setup.html               # Setup/installation guide
 ├── static/
 │   ├── css/styles.css
 │   └── js/dashboard.js
@@ -76,6 +96,8 @@ rfbooking-fastapi-oss/
 ├── supervisord.conf
 ├── requirements.txt
 ├── pyproject.toml
+├── rfbctl.sh                    # Linux/Mac management script
+├── rfbctl.bat                   # Windows management script
 ├── LICENSE                      # AGPL-3.0
 └── README.md
 ```
@@ -272,10 +294,20 @@ rfbooking-fastapi-oss/
 | Endpoint | Method | Auth | Description |
 |----------|--------|------|-------------|
 | `/api/auth/register` | POST | No | Request magic link |
-| `/auth/verify` | GET | No | Verify magic link, create session |
+| `/api/auth/verify` | GET | No | Verify magic link, create session |
 | `/api/auth/validate` | GET | No | Check session validity |
 | `/api/auth/me` | GET | Yes | Get current user info |
 | `/api/auth/logout` | POST | Yes | Revoke session |
+
+### Setup (Initial Configuration)
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/setup/status` | GET | No | Check if setup is required |
+| `/api/setup/configure` | POST | No* | Save initial configuration |
+| `/api/setup/test-email` | POST | No* | Test email settings |
+
+*Only available when system is not yet configured (`setup_completed: false`)
 
 ### Equipment
 
@@ -355,6 +387,8 @@ rfbooking-fastapi-oss/
 | `/reports` | Yes | Reports tab |
 | `/admin` | Yes (Admin) | Admin panel |
 | `/ai-assistant` | Yes | AI assistant |
+| `/setup` | No | Setup guide & downloads |
+| `/setup/download/{file}` | No | Download setup files |
 
 ---
 
@@ -363,39 +397,56 @@ rfbooking-fastapi-oss/
 ### config/config.yaml
 
 ```yaml
+# ============================================================================
+# REQUIRED SETTINGS - You MUST change these before first use
+# ============================================================================
+
+organization:
+  name: "My Organization"            # CHANGE: Your company name
+  work_day_start: "08:00"
+  work_day_end: "18:00"
+
+admin:
+  email: "admin@example.com"         # CHANGE: Your administrator email
+  name: "Administrator"
+
+email:
+  enabled: false                     # CHANGE: Set to true
+  provider: "smtp"                   # "smtp" or "resend"
+  from_address: "noreply@example.com"
+  from_name: "RFBooking System"
+  smtp_host: "smtp.example.com"      # CHANGE: Your SMTP server
+  smtp_port: 587
+  smtp_username: ""
+  smtp_password: ""
+  smtp_use_tls: true
+  smtp_use_ssl: false
+  api_key: ""                        # For Resend provider
+
+# ============================================================================
+# AUTOMATIC SETTINGS - Usually auto-configured by rfbctl.sh
+# ============================================================================
+
 app:
   name: "RFBooking"
-  secret_key: "your-secret-key"      # CHANGE THIS!
   debug: false
   host: "0.0.0.0"
   port: 8000
-  base_url: "http://localhost:8000"
-
-admin:
-  email: "admin@example.com"         # First admin user
-  name: "Administrator"
-
-organization:
-  name: "My Organization"
-  work_day_start: "08:00"
-  work_day_end: "18:00"
+  base_url: "http://localhost:8000"  # Auto-detected by rfbctl.sh init
 
 database:
   path: "/data/rfbooking.db"
 
-email:
-  enabled: false                     # Set true to enable
-  provider: "resend"
-  api_key: ""                        # Resend API key
-  from_address: "noreply@example.com"
-  from_name: "RFBooking System"
+# ============================================================================
+# OPTIONAL SETTINGS - Defaults work for most installations
+# ============================================================================
 
 ai:
   enabled: true
   model: "llama3.1:8b"
   ollama_host: "http://localhost:11434"
   max_tokens: 800
-  temperature: 0.3
+  temperature: 0.1
 
 security:
   auth_token_days: 30

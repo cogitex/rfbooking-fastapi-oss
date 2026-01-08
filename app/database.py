@@ -131,21 +131,23 @@ def init_database():
 
         db.commit()
 
-        # Create admin user if doesn't exist
-        admin_email = settings.admin.email
-        admin_user = db.query(User).filter(User.email == admin_email).first()
+        # Create admin user only after setup is completed
+        # (don't create default admin@example.com from unconfigured system)
+        if settings.app.setup_completed:
+            admin_email = settings.admin.email
+            admin_user = db.query(User).filter(User.email == admin_email).first()
 
-        if not admin_user:
-            admin_user = User(
-                email=admin_email,
-                name=settings.admin.name,
-                role_id=1,  # Admin role
-                is_active=True,
-                email_notifications_enabled=True,
-            )
-            db.add(admin_user)
-            db.commit()
-            print(f"Created admin user: {admin_email}")
+            if not admin_user:
+                admin_user = User(
+                    email=admin_email,
+                    name=settings.admin.name,
+                    role_id=1,  # Admin role
+                    is_active=True,
+                    email_notifications_enabled=True,
+                )
+                db.add(admin_user)
+                db.commit()
+                print(f"Created admin user: {admin_email}")
 
         # Seed default cron jobs
         from app.models.auth import CronJob
@@ -182,6 +184,105 @@ def init_database():
                     is_enabled=True,
                 )
                 db.add(job)
+
+        db.commit()
+
+        # Seed default equipment types
+        from app.models.equipment import EquipmentType, Equipment
+
+        equipment_types_data = [
+            (1, "Generic", "Generic equipment"),
+            (2, "Load-Pull", "Load-Pull testing equipment"),
+            (3, "Licenses", "Software licenses"),
+            (4, "SPAR", "RF SPAR test"),
+        ]
+
+        for type_id, name, description in equipment_types_data:
+            existing = db.query(EquipmentType).filter(EquipmentType.id == type_id).first()
+            if not existing:
+                eq_type = EquipmentType(
+                    id=type_id,
+                    name=name,
+                    description=description,
+                    is_active=True,
+                    manager_notifications_enabled=True,
+                )
+                db.add(eq_type)
+
+        db.commit()
+
+        # Seed default equipment
+        equipment_data = [
+            {
+                "id": 1,
+                "name": "Keysight N5247A PNA-X",
+                "description": "Network Analyzer 10 MHz - 67 GHz with S-parameters and noise figure capability",
+                "location": "Lab A - Room 101",
+                "type_id": 1,  # Generic
+            },
+            {
+                "id": 2,
+                "name": "Rohde & Schwarz FSW Signal Analyzer",
+                "description": "High-performance spectrum analyzer 2 Hz to 67 GHz with phase noise analysis",
+                "location": "Lab A - Room 101",
+                "type_id": 1,  # Generic
+            },
+            {
+                "id": 3,
+                "name": "Keysight E8257D Signal Generator",
+                "description": "PSG analog signal generator 100 kHz to 67 GHz",
+                "location": "Lab B - Room 203",
+                "type_id": 1,  # Generic
+            },
+            {
+                "id": 4,
+                "name": "Tektronix MSO64 Oscilloscope",
+                "description": "Mixed Signal Oscilloscope 6 Series 4 GHz 25 GS/s",
+                "location": "Lab B - Room 203",
+                "type_id": 1,  # Generic
+            },
+            {
+                "id": 5,
+                "name": "Keysight N1912A Power Meter",
+                "description": "P-Series dual-channel power meter with USB and LAN connectivity",
+                "location": "Lab C - Room 105",
+                "type_id": 1,  # Generic
+            },
+            {
+                "id": 6,
+                "name": "Maury Load Pull System",
+                "description": "Automated tuner system for RF power amplifier characterization",
+                "location": "Lab D - Room 301",
+                "type_id": 2,  # Load-Pull
+            },
+            {
+                "id": 7,
+                "name": "Keysight ADS License Pool",
+                "description": "Advanced Design System licenses (5 floating licenses)",
+                "location": "Software License Server",
+                "type_id": 3,  # Licenses
+            },
+            {
+                "id": 8,
+                "name": "ANSYS HFSS License",
+                "description": "High Frequency Structure Simulator for 3D EM analysis (3 licenses)",
+                "location": "Software License Server",
+                "type_id": 3,  # Licenses
+            },
+        ]
+
+        for eq_data in equipment_data:
+            existing = db.query(Equipment).filter(Equipment.id == eq_data["id"]).first()
+            if not existing:
+                equipment = Equipment(
+                    id=eq_data["id"],
+                    name=eq_data["name"],
+                    description=eq_data["description"],
+                    location=eq_data["location"],
+                    type_id=eq_data["type_id"],
+                    is_active=True,
+                )
+                db.add(equipment)
 
         db.commit()
 

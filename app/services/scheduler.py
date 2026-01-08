@@ -173,7 +173,15 @@ async def _run_daily_cleanup(db: Session) -> Dict[str, Any]:
 
 
 async def _run_weekly_reports(db: Session) -> Dict[str, Any]:
-    """Generate and send weekly manager reports."""
+    """Generate and send enhanced weekly manager reports.
+
+    Reports include:
+    - All upcoming bookings for next 7 days
+    - Grouped by equipment with formatted tables
+    - User details and booking times
+    - Equipment location and specs
+    - Sent even if no bookings (helpful null state)
+    """
     from app.models.equipment import Equipment, EquipmentManager
     from app.models.booking import Booking
     from app.models.user import User
@@ -183,15 +191,13 @@ async def _run_weekly_reports(db: Session) -> Dict[str, Any]:
     settings = get_settings()
     email_service = get_email_service()
 
-    if not settings.email.enabled:
-        return {"skipped": "Email disabled"}
-
-    # Get the date range for the report (last 7 days and next 7 days)
+    # Get the date range for the report (next 7 days)
     today = date.today()
-    week_ago = today - timedelta(days=7)
     week_ahead = today + timedelta(days=7)
+    week_start = today.strftime("%Y-%m-%d")
+    week_end = week_ahead.strftime("%Y-%m-%d")
 
-    # Get all managers
+    # Get all managers with email notifications enabled
     managers = (
         db.query(User)
         .filter(
@@ -207,125 +213,62 @@ async def _run_weekly_reports(db: Session) -> Dict[str, Any]:
     for manager in managers:
         # Get managed equipment
         if manager.role_id == 1:  # Admin sees all
-            equipment_ids = [e.id for e in db.query(Equipment).filter(Equipment.is_active == True).all()]
+            managed_equipment = db.query(Equipment).filter(Equipment.is_active == True).all()
         else:
-            equipment_ids = [
-                em.equipment_id
-                for em in db.query(EquipmentManager)
-                .filter(EquipmentManager.manager_id == manager.id)
+            managed_equipment = (
+                db.query(Equipment)
+                .join(EquipmentManager, EquipmentManager.equipment_id == Equipment.id)
+                .filter(
+                    EquipmentManager.manager_id == manager.id,
+                    Equipment.is_active == True,
+                )
                 .all()
-            ]
-
-        if not equipment_ids:
-            continue
-
-        # Get upcoming bookings
-        upcoming = (
-            db.query(Booking)
-            .filter(
-                Booking.equipment_id.in_(equipment_ids),
-                Booking.status == "active",
-                Booking.start_date >= today,
-                Booking.start_date <= week_ahead,
             )
-            .order_by(Booking.start_date)
-            .all()
-        )
 
-        # Get past week's activity
-        past_bookings = (
-            db.query(Booking)
-            .filter(
-                Booking.equipment_id.in_(equipment_ids),
-                Booking.start_date >= week_ago,
-                Booking.start_date < today,
+        # Build equipment bookings dict grouped by equipment
+        equipment_bookings = {}
+
+        for equipment in managed_equipment:
+            # Get upcoming bookings for this equipment
+            bookings = (
+                db.query(Booking)
+                .filter(
+                    Booking.equipment_id == equipment.id,
+                    Booking.status == "active",
+                    Booking.start_date >= today,
+                    Booking.start_date <= week_ahead,
+                )
+                .order_by(Booking.start_date, Booking.start_time)
+                .all()
             )
-            .count()
-        )
 
-        # Generate report email
-        html = _generate_weekly_report_html(
-            manager_name=manager.name,
-            upcoming_bookings=upcoming,
-            past_booking_count=past_bookings,
-            settings=settings,
-        )
+            equipment_bookings[equipment.name] = {
+                "location": equipment.location or "N/A",
+                "bookings": [
+                    {
+                        "user_name": b.user.name if b.user else "Unknown",
+                        "start_date": b.start_date.strftime("%Y-%m-%d"),
+                        "start_time": b.start_time.strftime("%H:%M") if b.start_time else "N/A",
+                        "end_time": b.end_time.strftime("%H:%M") if b.end_time else "N/A",
+                    }
+                    for b in bookings
+                ],
+            }
 
+        # Send report (even if no bookings - helpful null state)
         try:
-            await email_service.send_email(
-                to=manager.email,
-                subject=f"Weekly Equipment Report - {settings.app.name}",
-                html=html,
+            await email_service.send_weekly_manager_report(
+                email=manager.email,
+                name=manager.name,
+                equipment_bookings=equipment_bookings,
+                week_start=week_start,
+                week_end=week_end,
             )
             reports_sent += 1
         except Exception as e:
             print(f"Failed to send weekly report to {manager.email}: {e}")
 
     return {"reports_sent": reports_sent}
-
-
-def _generate_weekly_report_html(
-    manager_name: str,
-    upcoming_bookings: list,
-    past_booking_count: int,
-    settings,
-) -> str:
-    """Generate HTML for weekly report email."""
-    # Build upcoming bookings table
-    if upcoming_bookings:
-        bookings_html = """
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-            <tr style="background: #f5f5f5;">
-                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Equipment</th>
-                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Date</th>
-                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">User</th>
-            </tr>
-        """
-        for booking in upcoming_bookings[:10]:  # Limit to 10
-            bookings_html += f"""
-            <tr>
-                <td style="padding: 10px; border: 1px solid #ddd;">{booking.equipment.name if booking.equipment else 'N/A'}</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">{booking.start_date}</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">{booking.user.name if booking.user else 'N/A'}</td>
-            </tr>
-            """
-        bookings_html += "</table>"
-    else:
-        bookings_html = "<p>No upcoming bookings in the next 7 days.</p>"
-
-    return f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .summary {{ background: #e8f4fd; padding: 15px; border-radius: 6px; margin: 20px 0; }}
-        .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h2>Weekly Equipment Report</h2>
-        <p>Hi {manager_name},</p>
-        <p>Here's your weekly equipment booking summary:</p>
-
-        <div class="summary">
-            <p><strong>Past 7 days:</strong> {past_booking_count} bookings</p>
-            <p><strong>Upcoming:</strong> {len(upcoming_bookings)} bookings in the next 7 days</p>
-        </div>
-
-        <h3>Upcoming Bookings</h3>
-        {bookings_html}
-
-        <div class="footer">
-            <p>{settings.organization.name}</p>
-        </div>
-    </div>
-</body>
-</html>
-"""
 
 
 def setup_scheduler():

@@ -147,6 +147,8 @@ async def analyze_booking_request(
             "recommendations": result.get("recommendations", []),
             "reasoning": result.get("reasoning"),
             "available_slots": result.get("available_slots", []),
+            "extracted_specs": result.get("extracted_specs", {}),
+            "filter_info": result.get("filter_info", {}),
             "usage": {
                 "input_tokens": result.get("input_tokens", 0),
                 "output_tokens": result.get("output_tokens", 0),

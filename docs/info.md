@@ -280,7 +280,7 @@
 
          async def send_magic_link(self, email: str, token: str, name: str):
              if not self.enabled:
-                 return {"dev_mode": True, "link": f"/auth/verify?token={token}"}
+                 return {"dev_mode": True, "link": f"/api/auth/verify?token={token}"}
              # Send via Resend
 
      6.2 Notification Types
