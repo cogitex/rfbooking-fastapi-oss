@@ -8,68 +8,109 @@
 {% block body %}
 <div class="min-h-screen bg-gray-50">
     <!-- Sidebar -->
-    <div class="fixed inset-y-0 left-0 w-64 bg-gray-900 text-white">
-        <div class="p-6">
-            <h1 class="text-xl font-bold">{{ app_name }}</h1>
-            <p class="text-gray-400 text-sm">{{ organization_name }}</p>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">{{ app_name }}</div>
+            <div class="sidebar-subtitle">{{ organization_name }}</div>
         </div>
 
-        <nav class="mt-6">
-            <a href="#bookings" onclick="showTab('bookings')"
-                class="nav-link flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white" data-tab="bookings">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Bookings
-            </a>
-            <a href="#equipment" onclick="showTab('equipment')"
-                class="nav-link flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white" data-tab="equipment">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                </svg>
-                Equipment
-            </a>
-            {% if ai_enabled %}
-            <a href="#ai-assistant" onclick="showTab('ai-assistant')"
-                class="nav-link flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white" data-tab="ai-assistant">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-                AI Assistant
-            </a>
+        <nav class="sidebar-nav">
+            <!-- User Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Dashboard</div>
+                <a onclick="showSection('information')" class="sidebar-link active" data-section="information">
+                    <svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Information
+                </a>
+                <a onclick="showSection('new-booking')" class="sidebar-link" data-section="new-booking">
+                    <svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    New Booking
+                </a>
+                {% if ai_enabled %}
+                <a onclick="showSection('ai-assistant')" class="sidebar-link" data-section="ai-assistant">
+                    <svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    AI Assistant
+                </a>
+                {% endif %}
+                <a onclick="showSection('reports')" class="sidebar-link" data-section="reports">
+                    <svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Reports & Analytics
+                </a>
+            </div>
+
+            <!-- Manager Section -->
+            {% if user and user.role_id <= 2 %}
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Manager</div>
+                <a onclick="showSection('type-access')" class="sidebar-link" data-section="type-access">
+                    <svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    </svg>
+                    Type Access
+                </a>
+            </div>
             {% endif %}
-            <a href="#reports" onclick="showTab('reports')"
-                class="nav-link flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white" data-tab="reports">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                Reports
-            </a>
+
+            <!-- Admin Section -->
             {% if user and user.role_id == 1 %}
-            <a href="#admin" onclick="showTab('admin')"
-                class="nav-link flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white" data-tab="admin">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Admin
-            </a>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Admin</div>
+                <a onclick="showSection('user-management')" class="sidebar-link" data-section="user-management">
+                    <svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    Users
+                </a>
+                <a onclick="showSection('equipment-management')" class="sidebar-link" data-section="equipment-management">
+                    <svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                    Equipment
+                </a>
+                <a onclick="showSection('cron-jobs')" class="sidebar-link" data-section="cron-jobs">
+                    <svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Cron Jobs
+                </a>
+                {% if ai_enabled %}
+                <a onclick="showSection('ai-rules')" class="sidebar-link" data-section="ai-rules">
+                    <svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    AI Rules
+                </a>
+                <a onclick="showSection('ai-chat')" class="sidebar-link" data-section="ai-chat">
+                    <svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    AI Chat
+                </a>
+                {% endif %}
+            </div>
             {% endif %}
         </nav>
 
-        <!-- User info -->
-        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800">
+        <!-- User widget -->
+        <div class="sidebar-user">
             {% if user %}
-            <div class="flex items-center">
-                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                    {{ user.name[0] | upper }}
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm font-medium">{{ user.name }}</p>
-                    <p class="text-xs text-gray-400">{{ user.role_name | capitalize }}</p>
+            <div class="sidebar-user-info">
+                <div class="sidebar-user-avatar">{{ user.name[0] | upper }}</div>
+                <div>
+                    <div class="sidebar-user-name">{{ user.name }}</div>
+                    <span class="role-badge role-badge-{{ user.role_name | lower }}">{{ user.role_name }}</span>
                 </div>
             </div>
-            <button onclick="logout()" class="mt-3 w-full text-left text-sm text-gray-400 hover:text-white">
+            <button onclick="logout()" class="mt-3 w-full text-left text-sm text-gray-400 hover:text-white transition-colors">
                 Sign out
             </button>
             {% endif %}
@@ -78,166 +119,982 @@
 
     <!-- Main Content -->
     <div class="ml-64 p-8">
-        <!-- Bookings Tab -->
-        <div id="tab-bookings" class="tab-content">
+        <!-- ===================================================================
+             SECTION: Information
+             =================================================================== -->
+        <div id="section-information" class="section-content">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h2>
+
+            <!-- User Info Card -->
+            <div class="card mb-6">
+                <div class="card-header">
+                    <span>My Information</span>
+                </div>
+                <div class="card-body">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <div class="text-sm text-gray-500 mb-1">Name</div>
+                            <div class="font-medium">{{ user.name if user else 'N/A' }}</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500 mb-1">Email</div>
+                            <div class="font-medium">{{ user.email if user else 'N/A' }}</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500 mb-1">Role</div>
+                            <span class="role-badge role-badge-{{ user.role_name | lower if user else 'user' }}">{{ user.role_name if user else 'User' }}</span>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500 mb-1">Email Notifications</div>
+                            <label class="flex items-center cursor-pointer">
+                                <div id="email-toggle" class="toggle-switch {{ 'active' if user and user.email_notifications_enabled else '' }}" onclick="toggleEmailNotifications()"></div>
+                                <span class="ml-2 text-sm" id="email-toggle-label">{{ 'Enabled' if user and user.email_notifications_enabled else 'Disabled' }}</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Bookings Summary -->
+            <div class="card mb-6">
+                <div class="card-header">
+                    <span>My Upcoming Bookings</span>
+                    <button onclick="showSection('new-booking')" class="btn-primary text-sm">New Booking</button>
+                </div>
+                <div class="card-body">
+                    <div id="my-bookings-summary" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="text-gray-500">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Policies -->
+            <div class="card">
+                <div class="card-header">
+                    <span>System Policies</span>
+                </div>
+                <div class="card-body">
+                    <div class="grid md:grid-cols-3 gap-4 text-sm">
+                        <div class="p-3 bg-gray-50 rounded">
+                            <div class="text-gray-500">Max Sessions</div>
+                            <div class="font-semibold">10 active sessions</div>
+                        </div>
+                        <div class="p-3 bg-gray-50 rounded">
+                            <div class="text-gray-500">Daily Booking Limit</div>
+                            <div class="font-semibold">20 bookings/day</div>
+                        </div>
+                        <div class="p-3 bg-gray-50 rounded">
+                            <div class="text-gray-500">Max Booking Duration</div>
+                            <div class="font-semibold">30 days</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================================================================
+             SECTION: New Booking
+             =================================================================== -->
+        <div id="section-new-booking" class="section-content hidden">
+            <!-- Equipment Selection Card -->
+            <div class="card mb-6">
+                <div class="card-header cursor-pointer" onclick="toggleCard('equipmentSelection')">
+                    <div class="flex items-center justify-between w-full">
+                        <h2 class="text-lg font-bold">Equipment Selection</h2>
+                        <span id="equipmentSelectionToggle" class="text-xl text-gray-500 transition-transform">▼</span>
+                    </div>
+                </div>
+                <div id="equipmentSelectionContent" class="card-body">
+                    <!-- Equipment Type Filter -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Equipment Type</label>
+                        <select id="equipment-type-filter" onchange="filterEquipment()" class="w-full border border-gray-800 rounded-lg p-2 bg-blue-50">
+                            <option value="all">All Types</option>
+                        </select>
+                    </div>
+
+                    <!-- Equipment Grid -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Available Equipment</label>
+                        <div id="equipment-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="text-gray-500 text-center py-8 col-span-full">Loading equipment...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking Details Card -->
+            <div class="card mb-6">
+                <div class="card-header">
+                    <h2 id="bookingDetailsHeading" class="text-lg font-bold">Booking Details</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Selected Equipment Display -->
+                    <div id="selected-equipment-display" class="equipment-details mb-6 hidden">
+                        <div id="selected-equipment-name" class="equipment-details-name"></div>
+                        <div id="selected-equipment-info" class="equipment-details-info"></div>
+                    </div>
+
+                    <!-- Calendar for Date Selection -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Dates</label>
+                        <div id="booking-calendar" class="border border-gray-200 rounded-lg overflow-hidden">
+                            <div class="calendar-header-nav">
+                                <button type="button" onclick="bookingCalendarPrev()" class="calendar-nav-btn">&larr; Prev</button>
+                                <span id="booking-calendar-title" class="calendar-title">January 2026</span>
+                                <button type="button" onclick="bookingCalendarNext()" class="calendar-nav-btn">Next &rarr;</button>
+                            </div>
+                            <!-- Date Range Display -->
+                            <div class="text-center py-2 border-b border-gray-200">
+                                <span id="selected-date-range" class="text-lg font-bold text-gray-900">Choose dates</span>
+                            </div>
+                            <!-- Calendar Grid with 8 columns: KW + Mon-Sun -->
+                            <div class="grid grid-cols-8 gap-0">
+                                <div class="border-b border-gray-200 text-center py-2 font-semibold text-sm text-orange-700" style="background-color: #fef3c7;">KW</div>
+                                <div class="bg-gray-100 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Mo</div>
+                                <div class="bg-gray-100 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Tu</div>
+                                <div class="bg-gray-100 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">We</div>
+                                <div class="bg-gray-100 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Th</div>
+                                <div class="bg-gray-100 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Fr</div>
+                                <div class="bg-yellow-50 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Sa</div>
+                                <div class="bg-yellow-50 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Su</div>
+                            </div>
+                            <div id="booking-calendar-days" class="grid grid-cols-8 gap-0"></div>
+                        </div>
+                        <!-- Legend -->
+                        <div class="mt-3 flex flex-wrap gap-4 text-xs text-gray-600">
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 bg-green-600 rounded"></span>Selected Range</span>
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded border border-gray-300" style="background-color: #F0E68C;"></span>Partially Available (&lt;5h)</span>
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded border border-gray-300" style="background-color: #ffb96e;"></span>Fully Booked</span>
+                            <span class="flex items-center gap-2"><span class="w-4 h-4 bg-yellow-50 rounded border border-yellow-200"></span>Weekend</span>
+                        </div>
+                    </div>
+
+                    <!-- Time Range -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                            <input type="time" id="inline-start-time" class="w-full border rounded-lg p-2" value="08:00">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                            <input type="time" id="inline-end-time" class="w-full border rounded-lg p-2" value="18:00">
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description (Project name, frequencies, etc.)</label>
+                        <textarea id="inline-description" class="w-full border rounded-lg p-2" placeholder="Add booking notes..." rows="3" maxlength="10240" oninput="updateDescCharCount()"></textarea>
+                        <div class="flex justify-between mt-1">
+                            <span class="text-xs text-gray-500">Auto-expands as you type</span>
+                            <span id="desc-char-count" class="text-xs text-gray-500">0 / 10,240</span>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex gap-3">
+                        <button type="button" onclick="submitBooking()" id="inline-book-btn" class="btn-primary" disabled>Book Equipment</button>
+                        <button type="button" onclick="resetBookingForm()" class="btn-secondary">Clear Form</button>
+                    </div>
+
+                    <!-- Message Display -->
+                    <div id="booking-message" class="mt-4 hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================================================================
+             SECTION: AI Assistant
+             =================================================================== -->
+        <div id="section-ai-assistant" class="section-content hidden">
+            <div class="card mb-6">
+                <div class="card-header">
+                    <div>
+                        <h2 class="text-lg font-bold">AI Booking Assistant</h2>
+                        <p class="text-sm text-gray-600 mt-1">Describe your measurement needs in natural language and get equipment suggestions</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Search Settings -->
+                    <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h3 class="font-semibold text-gray-700 mb-3">Search Settings</h3>
+                        <div class="flex items-center gap-3">
+                            <label for="ai-search-days" class="text-sm text-gray-700 whitespace-nowrap">
+                                Search availability for next
+                            </label>
+                            <input type="number" id="ai-search-days" min="3" max="60" value="30"
+                                class="w-20 px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:outline-none text-center font-semibold">
+                            <span class="text-sm text-gray-700">days</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">
+                            Adjust how far ahead to search for available booking slots (3-60 days).
+                        </p>
+                    </div>
+
+                    <!-- How it works -->
+                    <div class="mb-6 p-4 bg-orange-50 border-l-4 border-orange-500 rounded">
+                        <h3 class="font-semibold text-orange-900 mb-2">How it works</h3>
+                        <ul class="text-sm text-orange-800 space-y-1 list-disc list-inside">
+                            <li>Describe your measurement needs in plain English</li>
+                            <li>For specific equipment types, use format: "[Type Name] type equipment" (e.g., "Load-Pull type equipment")</li>
+                            <li>AI will suggest matching equipment and available dates. Note: AI can make mistakes in interpretation.</li>
+                            <li>Click on suggested options to create bookings instantly</li>
+                        </ul>
+                    </div>
+
+                    <!-- Quick Templates -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Quick Templates</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <button type="button" onclick="setAIPrompt('I need to book Load-Pull type equipment for measurements at 1.3 GHz - 1.5 GHz at CW power 800W and second harmonic tuning for 5 days')"
+                                class="template-card text-left p-3 border-2 border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all">
+                                <div class="font-semibold text-gray-800 mb-1">Load-Pull Measurements</div>
+                                <div class="text-xs text-gray-600">I need to book Load-Pull type equipment for measurements at 1.3 GHz - 1.5 GHz at CW power 800W...</div>
+                            </button>
+
+                            <button type="button" onclick="setAIPrompt('I need a thermal chamber for the measurements at 250degC for two days in the last week of January')"
+                                class="template-card text-left p-3 border-2 border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all">
+                                <div class="font-semibold text-gray-800 mb-1">Thermal Measurements</div>
+                                <div class="text-xs text-gray-600">I need a thermal chamber for the measurements at 250degC for two days...</div>
+                            </button>
+
+                            <button type="button" onclick="setAIPrompt('I need Ansys license for two days starting next Tuesday')"
+                                class="template-card text-left p-3 border-2 border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all">
+                                <div class="font-semibold text-gray-800 mb-1">Ansys License</div>
+                                <div class="text-xs text-gray-600">I need Ansys license for two days starting next Tuesday</div>
+                            </button>
+
+                            <button type="button" onclick="setAIPrompt('Can I book the wafer prober for the measurements at high temperature for 5 days in the first week of February next year?')"
+                                class="template-card text-left p-3 border-2 border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all">
+                                <div class="font-semibold text-gray-800 mb-1">On-wafer Measurements</div>
+                                <div class="text-xs text-gray-600">Can I book the wafer prober for the measurements at high temperature for 5 days...</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Prompt Input -->
+                    <div class="mb-6">
+                        <label for="ai-prompt" class="block text-sm font-medium text-gray-700 mb-1">Your Request</label>
+                        <textarea id="ai-prompt" rows="4" maxlength="500"
+                            class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:outline-none resize-none"
+                            placeholder="Example: Which load-pull systems available for tomorrow?"
+                            oninput="updateAICharCount()"
+                            onkeydown="handleAIKeydown(event)"></textarea>
+                        <div class="flex items-center justify-between mt-2">
+                            <p class="text-xs text-gray-500">Press Enter to send, Shift+Enter for new line</p>
+                            <div class="flex items-center gap-3">
+                                <span id="ai-char-count" class="text-xs text-gray-500">0 / 500</span>
+                                <button type="button" onclick="clearAIPrompt()" class="text-xs text-gray-500 hover:text-gray-700 underline">Clear</button>
+                            </div>
+                        </div>
+
+                        <!-- Send Button -->
+                        <div class="mt-4">
+                            <button id="ai-send-btn" type="button" onclick="askAI()"
+                                class="w-full btn-primary py-3 px-6 rounded-lg font-semibold flex items-center justify-center gap-2">
+                                Get AI Suggestions
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="ai-loading" class="hidden mb-6 text-center py-8">
+                        <div class="loading mx-auto" style="width: 48px; height: 48px; border-width: 4px;"></div>
+                        <p class="mt-4 text-gray-600">AI is analyzing your request...</p>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="ai-error" class="hidden mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded">
+                        <h4 class="font-semibold text-red-900 mb-1">Error</h4>
+                        <p id="ai-error-message" class="text-sm text-red-800"></p>
+                    </div>
+
+                    <!-- AI Suggestions -->
+                    <div id="ai-results" class="hidden mb-6">
+                        <h3 class="font-semibold text-gray-800 mb-2">AI Suggestions</h3>
+                        <p id="ai-explanation" class="text-base text-gray-900 font-medium mb-4"></p>
+                        <div id="ai-recommendations" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                        <div class="mt-4 text-center">
+                            <button type="button" onclick="newAISearch()" class="text-sm text-orange-600 hover:text-orange-800 underline">New Search</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================================================================
+             SECTION: Reports
+             =================================================================== -->
+        <div id="section-reports" class="section-content hidden">
+            <!-- Booking History -->
+            <div class="card card-reports mb-6">
+                <div class="card-header cursor-pointer" onclick="toggleSection('bookingHistory')">
+                    <div class="flex items-center justify-between w-full">
+                        <div>
+                            <h2 class="text-lg font-bold">Booking History</h2>
+                        </div>
+                        <span id="bookingHistoryToggle" class="text-2xl text-gray-500 transition-transform">▼</span>
+                    </div>
+                </div>
+                <div id="bookingHistoryContent" class="card-body">
+                    <!-- Date Range Controls -->
+                    <div class="mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                                <input type="date" id="report-start-date" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                                <input type="date" id="report-end-date" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="applyBookingFilter()" class="btn-primary">Apply</button>
+                            <button onclick="loadReports()" class="btn-secondary">Load Reports</button>
+                            <button onclick="exportReportsCSV()" class="btn-secondary">📥 Export CSV</button>
+                        </div>
+                    </div>
+
+                    <!-- Booking History List -->
+                    <div>
+                        <h3 class="block text-sm font-medium text-gray-700 mb-2">My Past Bookings</h3>
+                        <div id="bookingHistoryContainer" class="border border-gray-200 rounded-lg bg-white max-h-[600px] overflow-y-auto">
+                            <div id="bookingHistoryList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+                                <div class="text-center py-8 text-gray-500 text-sm col-span-full">Loading bookings...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6" id="statsCardsContainer">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <!-- Equipment Utilization Table -->
+            <div class="card card-reports mb-6">
+                <div class="card-header cursor-pointer" onclick="toggleSection('equipmentUtilization')">
+                    <div class="flex items-center justify-between w-full">
+                        <div>
+                            <h2 class="text-lg font-bold">Equipment Utilization</h2>
+                            <p class="text-sm text-gray-600">Utilization based on number of bookings / total days in range</p>
+                        </div>
+                        <span id="equipmentUtilizationToggle" class="text-2xl text-gray-500 transition-transform">▼</span>
+                    </div>
+                </div>
+                <div id="equipmentUtilizationContent" class="card-body overflow-x-auto">
+                    <table id="equipmentUtilizationTable" class="w-full text-sm">
+                        <thead class="border-b-2" style="border-color: var(--brand-200);">
+                            <tr class="text-left">
+                                <th class="pb-3 font-semibold text-gray-700">Equipment Name</th>
+                                <th class="pb-3 font-semibold text-gray-700">Location</th>
+                                <th class="pb-3 font-semibold text-gray-700 text-right">Bookings</th>
+                                <th class="pb-3 font-semibold text-gray-700 text-right">Hours</th>
+                                <th class="pb-3 font-semibold text-gray-700">Utilization</th>
+                            </tr>
+                        </thead>
+                        <tbody id="equipmentUtilizationBody" class="divide-y divide-gray-100">
+                            <tr><td colspan="5" class="text-center py-8 text-gray-500">No data loaded</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- User Activity Table -->
+            <div class="card card-reports mb-6">
+                <div class="card-header cursor-pointer" onclick="toggleSection('userActivity')">
+                    <div class="flex items-center justify-between w-full">
+                        <div>
+                            <h2 class="text-lg font-bold">User Activity</h2>
+                        </div>
+                        <span id="userActivityToggle" class="text-2xl text-gray-500 transition-transform">▼</span>
+                    </div>
+                </div>
+                <div id="userActivityContent" class="card-body overflow-x-auto">
+                    <table id="userActivityTable" class="w-full text-sm">
+                        <thead class="border-b-2" style="border-color: var(--brand-200);">
+                            <tr class="text-left">
+                                <th class="pb-3 font-semibold text-gray-700">User</th>
+                                <th class="pb-3 font-semibold text-gray-700 text-right">Active</th>
+                                <th class="pb-3 font-semibold text-gray-700 text-right">Cancelled</th>
+                                <th class="pb-3 font-semibold text-gray-700 text-right">Completed</th>
+                                <th class="pb-3 font-semibold text-gray-700 text-right">Avg Hrs/Booking</th>
+                                <th class="pb-3 font-semibold text-gray-700 text-right">Total Hours</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userActivityBody" class="divide-y divide-gray-100">
+                            <tr><td colspan="6" class="text-center py-8 text-gray-500">No data loaded</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Top Equipment Section -->
+            <div class="card card-reports mb-6">
+                <div class="card-header cursor-pointer" onclick="toggleSection('topEquipment')">
+                    <div class="flex items-center justify-between w-full">
+                        <div>
+                            <h2 class="text-lg font-bold">Top 10 Most Booked Equipment</h2>
+                        </div>
+                        <span id="topEquipmentToggle" class="text-2xl text-gray-500 transition-transform">▼</span>
+                    </div>
+                </div>
+                <div id="topEquipmentContent" class="card-body">
+                    <div id="topEquipmentContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Populated by JavaScript -->
+                        <div class="text-center py-8 text-gray-500 text-sm col-span-full">No data loaded</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================================================================
+             SECTION: Equipment Type Access (Manager)
+             =================================================================== -->
+        <div id="section-type-access" class="section-content hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Equipment Type Access Control</h2>
+
+            <div class="card">
+                <div class="card-header">
+                    <span>Manage User Access</span>
+                    <select id="type-access-filter" onchange="loadTypeAccess()" class="border rounded px-3 py-1">
+                        <option value="">Select Equipment Type...</option>
+                    </select>
+                </div>
+                <div class="card-body">
+                    <div id="type-access-table">
+                        <div class="text-gray-500 text-center py-4">Select an equipment type to manage access</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================================================================
+             SECTION: User Management (Admin)
+             =================================================================== -->
+        <div id="section-user-management" class="section-content hidden">
+            <!-- Registration Access Control Card -->
+            <div class="card card-users mb-6">
+                <div class="card-header">
+                    <div>
+                        <h2 class="text-lg font-bold">Registration Access Control</h2>
+                        <p class="text-sm text-gray-600">Configure how users can register for your organization</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Domain-Based Registration -->
+                    <div class="mb-4 pb-4 border-b border-gray-200">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900">Domain-Based Registration</h3>
+                                <p class="text-sm text-gray-600 mt-1">Allow ALL users with email addresses from specified domains</p>
+                            </div>
+                            <label class="toggle-switch-container">
+                                <input type="checkbox" id="domainRegistrationToggle" onchange="updateRegistrationSettings()">
+                                <div class="toggle-switch-slider"></div>
+                            </label>
+                        </div>
+                        <!-- Domain Input -->
+                        <div id="domainInputSection" class="mt-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Allowed Domain(s)</label>
+                            <div class="flex gap-2">
+                                <input
+                                    type="text"
+                                    id="allowedDomainsInput"
+                                    placeholder="example.com"
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent font-mono text-sm"
+                                >
+                                <button onclick="saveDomainSettings()" class="btn-primary text-sm">Save</button>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Enter domain without @ (e.g., company.com). For multiple domains, separate with commas.</p>
+                        </div>
+                    </div>
+
+                    <!-- Email-Based Registration -->
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-900">Email-Based Registration</h3>
+                            <p class="text-sm text-gray-600 mt-1">Only allow specific pre-approved email addresses to register</p>
+                        </div>
+                        <label class="toggle-switch-container">
+                            <input type="checkbox" id="emailRegistrationToggle" onchange="updateRegistrationSettings()">
+                            <div class="toggle-switch-slider"></div>
+                        </label>
+                    </div>
+
+                    <!-- Email Import Section (shown when email-based is enabled) -->
+                    <div id="emailImportSection" class="hidden mt-4 pt-4 border-t border-gray-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-gray-900">Allowed Emails (<span id="allowedEmailsCount">0</span>)</h3>
+                            <button class="btn-primary text-sm" onclick="openImportEmailsModal()">
+                                📥 Import Emails
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                            <table id="allowedEmailsTable" class="w-full text-sm">
+                                <thead class="bg-gray-50 border-b-2" style="border-color: var(--brand-200);">
+                                    <tr class="text-left">
+                                        <th class="py-3 px-4 font-semibold text-gray-700">Email</th>
+                                        <th class="py-3 px-4 font-semibold text-gray-700">Name</th>
+                                        <th class="py-3 px-4 font-semibold text-gray-700">Status</th>
+                                        <th class="py-3 px-4 font-semibold text-gray-700">Invited</th>
+                                        <th class="py-3 px-4 font-semibold text-gray-700">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="allowedEmailsTableBody" class="divide-y divide-gray-100 bg-white">
+                                    <tr><td colspan="5" class="text-center py-8 text-gray-500">Loading emails...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Authentication Token Management Card -->
+            <div class="card card-users mb-6">
+                <div class="card-header">
+                    <div>
+                        <h2 class="text-lg font-bold">Authentication Token Management</h2>
+                        <p class="text-sm text-gray-600">Manage user authentication tokens and force re-registration</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="bg-orange-50 border-l-4 border-orange-500 p-4">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <div class="flex-1">
+                                <h3 class="text-sm font-semibold text-orange-900 mb-1">Delete Old Authentication Tokens</h3>
+                                <p class="text-sm text-orange-800 mb-3">
+                                    This action will delete all authentication tokens older than the specified number of days.
+                                    Users who registered before this period will be forced to register again.
+                                </p>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex items-center gap-2">
+                                        <label for="tokenAgeDays" class="text-sm font-medium text-orange-900">Delete tokens older than:</label>
+                                        <input
+                                            type="number"
+                                            id="tokenAgeDays"
+                                            min="0"
+                                            max="180"
+                                            value="5"
+                                            class="w-20 px-3 py-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-center font-semibold"
+                                        >
+                                        <span class="text-sm text-orange-900 font-medium">days</span>
+                                    </div>
+                                    <button
+                                        onclick="deleteOldTokens()"
+                                        class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg transition-colors"
+                                    >
+                                        🗑️ Delete Old Tokens
+                                    </button>
+                                </div>
+                                <p class="text-xs text-orange-700 mt-3 italic">
+                                    ⚠️ Warning: Affected users will need to request a new registration link to access the system again.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Service Mode Card -->
+            <div class="card card-users mb-6">
+                <div class="card-header">
+                    <div>
+                        <h2 class="text-lg font-bold">Service Mode</h2>
+                        <p class="text-sm text-gray-600">Restrict login to admins only for maintenance or emergency situations</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-900">Service Mode</h3>
+                            <p class="text-sm text-gray-600 mt-1">
+                                When enabled, only administrators can log in. All other users will be prevented from accessing the system.
+                            </p>
+                            <p class="text-xs text-orange-600 mt-2">
+                                ⚠️ Use this mode for maintenance, emergency situations, or when you need to restrict system access temporarily.
+                            </p>
+                        </div>
+                        <label class="toggle-switch-container ml-4">
+                            <input type="checkbox" id="serviceModeToggle" onchange="toggleServiceMode()">
+                            <div class="toggle-switch-slider inverted"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Management Table -->
+            <div class="card card-users">
+                <div class="card-header">
+                    <div>
+                        <h2 class="text-lg font-bold">User Management</h2>
+                        <p class="text-sm text-gray-600">Manage user roles and access for your organization</p>
+                    </div>
+                </div>
+                <div class="card-body overflow-x-auto p-0">
+                    <table id="usersTable" class="w-full text-sm">
+                        <thead class="border-b-2" style="border-color: var(--brand-200);">
+                            <tr class="text-left">
+                                <th class="py-3 px-4 font-semibold text-gray-700">Email</th>
+                                <th class="py-3 px-4 font-semibold text-gray-700">Name</th>
+                                <th class="py-3 px-4 font-semibold text-gray-700">Role</th>
+                                <th class="py-3 px-4 font-semibold text-gray-700">Status</th>
+                                <th class="py-3 px-4 font-semibold text-gray-700">Last Login</th>
+                                <th class="py-3 px-4 font-semibold text-gray-700">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body" class="divide-y divide-gray-100">
+                            <tr><td colspan="6" class="text-center py-8 text-gray-500">Loading users...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================================================================
+             SECTION: Equipment Management (Admin)
+             =================================================================== -->
+        <div id="section-equipment-management" class="section-content hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Equipment Management</h2>
+
+            <!-- Equipment Types -->
+            <div class="card mb-6">
+                <div class="card-header">
+                    <span>Equipment Types</span>
+                    <button onclick="showTypeModal()" class="btn-primary text-sm">Add Type</button>
+                </div>
+                <div class="card-body">
+                    <div id="types-list" class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="text-gray-500">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Equipment Inventory -->
+            <div class="card">
+                <div class="card-header">
+                    <span>Equipment Inventory</span>
+                    <button onclick="showEquipmentModal()" class="btn-primary text-sm">Add Equipment</button>
+                </div>
+                <div class="card-body p-0">
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th class="text-left">Name</th>
+                                <th class="text-left">Location</th>
+                                <th class="text-left">Type</th>
+                                <th class="text-center">Managers</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="equipment-table-body">
+                            <tr><td colspan="6" class="text-center text-gray-500 py-4">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================================================================
+             SECTION: Cron Jobs (Admin)
+             =================================================================== -->
+        <div id="section-cron-jobs" class="section-content hidden">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">My Bookings</h2>
-                <button onclick="showNewBookingModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                    New Booking
-                </button>
+                <h2 class="text-2xl font-bold text-gray-800">Cron Jobs</h2>
+                <button onclick="loadCronJobs()" class="btn-secondary">🔄 Refresh</button>
             </div>
-            <div id="bookings-list" class="bg-white rounded-lg shadow">
-                <div class="p-8 text-center text-gray-500">
-                    Loading bookings...
-                </div>
+
+            <div id="cron-jobs-list" class="grid gap-4">
+                <div class="text-gray-500">Loading...</div>
             </div>
         </div>
 
-        <!-- Equipment Tab -->
-        <div id="tab-equipment" class="tab-content hidden">
+        <!-- ===================================================================
+             SECTION: AI Rules (Admin)
+             =================================================================== -->
+        <div id="section-ai-rules" class="section-content hidden">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">Equipment</h2>
-                {% if user and user.role_id == 1 %}
-                <button onclick="showNewEquipmentModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                    Add Equipment
-                </button>
-                {% endif %}
+                <h2 class="text-2xl font-bold text-gray-800">AI Specification Rules</h2>
+                <button onclick="showAIRuleModal()" class="btn-primary">Add Rule</button>
             </div>
-            <div id="equipment-list" class="grid gap-4">
-                <div class="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-                    Loading equipment...
-                </div>
+
+            <div id="ai-rules-list" class="space-y-4">
+                <div class="text-gray-500">Loading...</div>
             </div>
         </div>
 
-        <!-- AI Assistant Tab -->
-        <div id="tab-ai-assistant" class="tab-content hidden">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">AI Assistant</h2>
-            <div class="bg-white rounded-lg shadow p-6">
-                <p class="text-gray-600 mb-4">Describe what equipment you need and the AI will recommend the best options.</p>
-                <textarea id="ai-prompt" rows="4" class="w-full border rounded-lg p-3 mb-4" placeholder="e.g., I need a load-pull system for 800W at 2.4 GHz..."></textarea>
-                <button onclick="askAI()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-                    Get Recommendations
-                </button>
-                <div id="ai-results" class="mt-6 hidden">
-                    <h3 class="font-semibold mb-3">Recommendations</h3>
-                    <div id="ai-recommendations"></div>
-                </div>
-            </div>
-        </div>
+        <!-- ===================================================================
+             SECTION: AI Chat (Admin)
+             =================================================================== -->
+        <div id="section-ai-chat" class="section-content hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">AI Chat</h2>
 
-        <!-- Reports Tab -->
-        <div id="tab-reports" class="tab-content hidden">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Reports</h2>
-            <div class="grid md:grid-cols-3 gap-6 mb-6">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-gray-500 text-sm uppercase">Total Bookings</h3>
-                    <p id="stat-total-bookings" class="text-3xl font-bold text-gray-800">-</p>
+            <div class="card">
+                <div class="card-header">
+                    <span>Chat with AI</span>
+                    <button onclick="clearChat()" class="btn-secondary text-sm">Clear Chat</button>
                 </div>
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-gray-500 text-sm uppercase">Active Bookings</h3>
-                    <p id="stat-active-bookings" class="text-3xl font-bold text-gray-800">-</p>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-gray-500 text-sm uppercase">Equipment Count</h3>
-                    <p id="stat-equipment-count" class="text-3xl font-bold text-gray-800">-</p>
-                </div>
-            </div>
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="font-semibold mb-4">Equipment Usage</h3>
-                <div id="equipment-usage-list"></div>
-            </div>
-        </div>
-
-        <!-- Admin Tab -->
-        <div id="tab-admin" class="tab-content hidden">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Admin Panel</h2>
-            <div class="grid gap-6">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="font-semibold mb-4">Users</h3>
-                    <div id="users-list"></div>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="font-semibold mb-4">Cron Jobs</h3>
-                    <div id="cron-jobs-list"></div>
+                <div class="card-body p-0">
+                    <div class="chat-container">
+                        <div id="chat-messages" class="chat-messages">
+                            <div class="chat-message assistant">
+                                Hello! I'm your AI assistant. I can help you with equipment recommendations, answer questions about specifications, or assist with booking decisions. How can I help you today?
+                            </div>
+                        </div>
+                        <div class="chat-input-container">
+                            <textarea id="chat-input" class="chat-input" rows="2" placeholder="Type your message..." onkeydown="handleChatKeydown(event)"></textarea>
+                            <button onclick="sendChatMessage()" class="chat-send-btn">Send</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- New Booking Modal -->
-<div id="booking-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
-        <h3 class="text-xl font-bold mb-4">New Booking</h3>
-        <form id="booking-form" onsubmit="createBooking(event)">
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Equipment</label>
-                <select id="booking-equipment" required class="w-full border rounded-lg p-2">
-                    <option value="">Select equipment...</option>
-                </select>
+<!-- ===================================================================
+     MODALS
+     =================================================================== -->
+
+<!-- Role Edit Modal -->
+<div id="role-modal" class="modal-backdrop hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Edit User Role</h3>
+            <button onclick="hideRoleModal()" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="role-modal-user-id">
+            <div class="space-y-3">
+                <label class="flex items-center p-3 border rounded cursor-pointer hover:bg-gray-50">
+                    <input type="radio" name="new-role" value="1" class="mr-3">
+                    <div>
+                        <div class="font-medium">Admin</div>
+                        <div class="text-sm text-gray-500">Full access to all features</div>
+                    </div>
+                </label>
+                <label class="flex items-center p-3 border rounded cursor-pointer hover:bg-gray-50">
+                    <input type="radio" name="new-role" value="2" class="mr-3">
+                    <div>
+                        <div class="font-medium">Manager</div>
+                        <div class="text-sm text-gray-500">Manage equipment and view all bookings</div>
+                    </div>
+                </label>
+                <label class="flex items-center p-3 border rounded cursor-pointer hover:bg-gray-50">
+                    <input type="radio" name="new-role" value="3" class="mr-3">
+                    <div>
+                        <div class="font-medium">User</div>
+                        <div class="text-sm text-gray-500">Create and manage own bookings</div>
+                    </div>
+                </label>
             </div>
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                    <input type="date" id="booking-start-date" required class="w-full border rounded-lg p-2">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                    <input type="date" id="booking-end-date" required class="w-full border rounded-lg p-2">
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
-                    <input type="time" id="booking-start-time" required class="w-full border rounded-lg p-2" value="08:00">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">End Time</label>
-                    <input type="time" id="booking-end-time" required class="w-full border rounded-lg p-2" value="18:00">
-                </div>
-            </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea id="booking-description" rows="3" class="w-full border rounded-lg p-2"></textarea>
-            </div>
-            <div class="flex justify-end space-x-3">
-                <button type="button" onclick="hideBookingModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">
-                    Cancel
-                </button>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                    Create Booking
-                </button>
-            </div>
-        </form>
+        </div>
+        <div class="modal-footer">
+            <button onclick="hideRoleModal()" class="btn-secondary">Cancel</button>
+            <button onclick="saveUserRole()" class="btn-primary">Save</button>
+        </div>
     </div>
 </div>
+
+<!-- Import Emails Modal -->
+<div id="importEmailsModalOverlay" class="modal-backdrop hidden">
+    <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Import Allowed Emails</h3>
+            <button onclick="closeImportEmailsModal()" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p class="text-sm text-gray-600 mb-4">
+                Enter email addresses and optional names, one per line. Format: <code class="bg-gray-100 px-1 rounded">email@example.com, Name</code>
+            </p>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Email List</label>
+                <textarea
+                    id="importEmailsTextarea"
+                    rows="10"
+                    class="w-full border border-gray-300 rounded-lg p-3 font-mono text-sm"
+                    placeholder="john@example.com, John Doe
+jane@example.com, Jane Smith
+bob@example.com"
+                ></textarea>
+            </div>
+            <div id="importPreviewSection" class="hidden mb-4">
+                <h4 class="font-medium text-gray-700 mb-2">Preview (<span id="importPreviewCount">0</span> emails)</h4>
+                <div class="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="py-2 px-3 text-left font-medium text-gray-600">Email</th>
+                                <th class="py-2 px-3 text-left font-medium text-gray-600">Name</th>
+                                <th class="py-2 px-3 text-left font-medium text-gray-600">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="importPreviewTableBody" class="divide-y divide-gray-100">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="importErrorSection" class="hidden mb-4">
+                <div class="bg-red-50 border-l-4 border-red-500 p-3 rounded">
+                    <h4 class="font-medium text-red-800 mb-1">Validation Errors</h4>
+                    <ul id="importErrorList" class="text-sm text-red-700 list-disc list-inside"></ul>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeImportEmailsModal()" class="btn-secondary">Cancel</button>
+            <button onclick="previewImportEmails()" class="btn-secondary">Preview</button>
+            <button onclick="confirmImportEmails()" class="btn-primary" id="confirmImportBtn">Import</button>
+        </div>
+    </div>
+</div>
+
+<!-- Equipment Modal -->
+<div id="equipment-modal" class="modal-backdrop hidden">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="equipment-modal-title">Add Equipment</h3>
+            <button onclick="hideEquipmentModal()" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="equipment-form">
+                <input type="hidden" id="equipment-modal-id">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                    <input type="text" id="equipment-name" required class="w-full border rounded-lg p-2">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="equipment-description" rows="3" class="w-full border rounded-lg p-2" placeholder="Include technical specs for AI recommendations"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                        <input type="text" id="equipment-location" class="w-full border rounded-lg p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                        <select id="equipment-type" class="w-full border rounded-lg p-2">
+                            <option value="">No type</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Calibration Due Date</label>
+                    <input type="date" id="equipment-calibration" class="w-full border rounded-lg p-2">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button onclick="hideEquipmentModal()" class="btn-secondary">Cancel</button>
+            <button onclick="saveEquipment()" class="btn-primary">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Type Modal -->
+<div id="type-modal" class="modal-backdrop hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="type-modal-title">Add Equipment Type</h3>
+            <button onclick="hideTypeModal()" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="type-form">
+                <input type="hidden" id="type-modal-id">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                    <input type="text" id="type-name" required class="w-full border rounded-lg p-2">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="type-description" rows="2" class="w-full border rounded-lg p-2"></textarea>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="type-manager-notifications" checked class="mr-2">
+                    <label for="type-manager-notifications" class="text-sm">Send manager notifications</label>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button onclick="hideTypeModal()" class="btn-secondary">Cancel</button>
+            <button onclick="saveType()" class="btn-primary">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- AI Rule Modal -->
+<div id="ai-rule-modal" class="modal-backdrop hidden">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="ai-rule-modal-title">Add AI Rule</h3>
+            <button onclick="hideAIRuleModal()" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="ai-rule-form">
+                <input type="hidden" id="ai-rule-modal-id">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Rule Type *</label>
+                    <select id="ai-rule-type" required class="w-full border rounded-lg p-2" onchange="onRuleTypeChange()">
+                        <option value="general">General</option>
+                        <option value="parameter">Parameter</option>
+                        <option value="example">Example</option>
+                    </select>
+                </div>
+                <div id="parameter-fields" class="grid grid-cols-2 gap-4 mb-4 hidden">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Parameter Name</label>
+                        <input type="text" id="ai-rule-param-name" class="w-full border rounded-lg p-2" placeholder="e.g., frequency">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                        <input type="text" id="ai-rule-param-unit" class="w-full border rounded-lg p-2" placeholder="e.g., GHz">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Prompt Text *</label>
+                    <textarea id="ai-rule-prompt" rows="4" required class="w-full border rounded-lg p-2" placeholder="Instructions for the AI..."></textarea>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="ai-rule-enabled" checked class="mr-2">
+                    <label for="ai-rule-enabled" class="text-sm">Enabled</label>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button onclick="hideAIRuleModal()" class="btn-secondary">Cancel</button>
+            <button onclick="saveAIRule()" class="btn-primary">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container" class="toast-container"></div>
 
 <script>
-// Initialize data from template
+// ===============================
+// Global State
+// ===============================
 const userData = {{ user | tojson | safe if user else 'null' }};
 const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrf_token='))?.split('=')[1] || '';
 
-// Tab management
-function showTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('bg-gray-800', 'text-white');
-        link.classList.add('text-gray-300');
-    });
+let currentSection = 'information';
+let allEquipmentData = [];
+let allEquipmentTypes = [];
+let allUsersData = [];
+let selectedEquipmentForBooking = null;
+let chatMessages = [];
 
-    document.getElementById('tab-' + tabName).classList.remove('hidden');
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add('bg-gray-800', 'text-white');
-    document.querySelector(`[data-tab="${tabName}"]`).classList.remove('text-gray-300');
-
-    // Load tab data
-    if (tabName === 'bookings') loadBookings();
-    if (tabName === 'equipment') loadEquipment();
-    if (tabName === 'reports') loadReports();
-    if (tabName === 'admin') loadAdminData();
-}
-
-// API helper
+// ===============================
+// API Helper
+// ===============================
 async function apiCall(url, method = 'GET', body = null) {
     const options = {
         method,
@@ -251,40 +1108,705 @@ async function apiCall(url, method = 'GET', body = null) {
     return response.json();
 }
 
-// Load bookings
-async function loadBookings() {
-    const data = await apiCall('/api/bookings?user_id=' + (userData?.id || ''));
-    const list = document.getElementById('bookings-list');
+// ===============================
+// Utility Functions
+// ===============================
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
-    if (!data.bookings?.length) {
-        list.innerHTML = '<div class="p-8 text-center text-gray-500">No bookings found</div>';
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+// ===============================
+// Section Navigation
+// ===============================
+function showSection(sectionName) {
+    // Hide all sections
+    document.querySelectorAll('.section-content').forEach(s => s.classList.add('hidden'));
+    // Remove active from all links
+    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+
+    // Show selected section
+    const section = document.getElementById('section-' + sectionName);
+    if (section) section.classList.remove('hidden');
+
+    // Activate link
+    const link = document.querySelector(`[data-section="${sectionName}"]`);
+    if (link) link.classList.add('active');
+
+    currentSection = sectionName;
+
+    // Load section data
+    if (sectionName === 'information') loadInformation();
+    if (sectionName === 'new-booking') loadNewBookingSection();
+    if (sectionName === 'reports') loadReports();
+    if (sectionName === 'type-access') loadTypeAccessSection();
+    if (sectionName === 'user-management') loadUserManagement();
+    if (sectionName === 'equipment-management') loadEquipmentManagement();
+    if (sectionName === 'cron-jobs') loadCronJobs();
+    if (sectionName === 'ai-rules') loadAIRules();
+}
+
+// ===============================
+// Information Section
+// ===============================
+async function loadInformation() {
+    // Load upcoming bookings
+    const data = await apiCall('/api/bookings?user_id=' + (userData?.id || ''));
+    const container = document.getElementById('my-bookings-summary');
+
+    const now = new Date().toISOString().split('T')[0];
+    const upcoming = (data.bookings || []).filter(b => b.status === 'active' && b.start_date >= now).slice(0, 6);
+
+    if (upcoming.length === 0) {
+        container.innerHTML = '<div class="text-gray-500">No upcoming bookings</div>';
         return;
     }
 
-    list.innerHTML = `
-        <table class="w-full">
-            <thead class="bg-gray-50">
+    container.innerHTML = upcoming.map(b => `
+        <div class="p-4 bg-gray-50 rounded-lg">
+            <div class="font-medium">${escapeHtml(b.equipment_name || 'Equipment')}</div>
+            <div class="text-sm text-gray-500">${b.start_date} - ${b.end_date}</div>
+            <div class="text-sm text-gray-500">${b.start_time?.slice(0,5)} - ${b.end_time?.slice(0,5)}</div>
+        </div>
+    `).join('');
+}
+
+async function toggleEmailNotifications() {
+    const toggle = document.getElementById('email-toggle');
+    const label = document.getElementById('email-toggle-label');
+    const isActive = toggle.classList.contains('active');
+
+    try {
+        await apiCall('/api/user/notification-preferences', 'PATCH', {
+            email_notifications_enabled: !isActive
+        });
+        toggle.classList.toggle('active');
+        label.textContent = isActive ? 'Disabled' : 'Enabled';
+        showToast('Notification preferences updated', 'success');
+    } catch (e) {
+        showToast('Failed to update preferences', 'error');
+    }
+}
+
+// ===============================
+// New Booking Section
+// ===============================
+let bookingCalendarDate = new Date();
+let selectedStartDate = null;
+let selectedEndDate = null;
+
+async function loadNewBookingSection() {
+    // Load equipment
+    const eqData = await apiCall('/api/equipment');
+    allEquipmentData = eqData.equipment || [];
+
+    // Load types for filter
+    const typesData = await apiCall('/api/admin/equipment-types');
+    allEquipmentTypes = typesData.types || [];
+
+    // Populate type filter
+    const filter = document.getElementById('equipment-type-filter');
+    filter.innerHTML = '<option value="all">All Types</option>' +
+        allEquipmentTypes.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+
+    renderEquipmentGrid();
+    renderBookingCalendar();
+}
+
+function renderEquipmentGrid() {
+    const container = document.getElementById('equipment-grid');
+    const filterValue = document.getElementById('equipment-type-filter').value;
+
+    let filtered = allEquipmentData;
+    if (filterValue !== 'all') {
+        filtered = allEquipmentData.filter(e => e.type_id == filterValue);
+    }
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="text-gray-500 col-span-full text-center py-8">No equipment found</div>';
+        return;
+    }
+
+    container.innerHTML = filtered.map(e => `
+        <label class="equipment-card border-2 ${selectedEquipmentForBooking === e.id ? 'border-blue-500 bg-blue-50' : 'border-orange-200'} rounded-lg p-4 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
+            <div class="flex items-start gap-3">
+                <input type="radio" name="equipment" value="${e.id}" class="mt-1" ${selectedEquipmentForBooking === e.id ? 'checked' : ''}
+                    onchange="selectEquipmentForBooking(${e.id}, '${escapeHtml(e.name)}', '${escapeHtml(e.type_name || '')}', '${escapeHtml(e.location || '')}')">
+                <div class="flex-1">
+                    <h3 class="font-semibold text-gray-900">${escapeHtml(e.name)}</h3>
+                    ${e.description ? `<p class="text-sm text-gray-600 mt-1">${escapeHtml(e.description)}</p>` : ''}
+                    <div class="flex items-center gap-2 mt-2">
+                        ${e.location ? `<span class="text-xs text-gray-500">📍 ${escapeHtml(e.location)}</span>` : ''}
+                        ${e.type_name ? `<span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">${escapeHtml(e.type_name)}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+        </label>
+    `).join('');
+}
+
+function filterEquipment() {
+    renderEquipmentGrid();
+}
+
+function selectEquipmentForBooking(id, name, type, location) {
+    selectedEquipmentForBooking = id;
+
+    // Update UI
+    document.getElementById('selected-equipment-display').classList.remove('hidden');
+    document.getElementById('selected-equipment-name').textContent = name;
+    document.getElementById('selected-equipment-info').textContent = [type, location].filter(Boolean).join(' • ') || 'No additional info';
+
+    updateBookButton();
+    renderEquipmentGrid();
+}
+
+function updateBookButton() {
+    const btn = document.getElementById('inline-book-btn');
+    if (selectedEquipmentForBooking && selectedStartDate && selectedEndDate) {
+        btn.disabled = false;
+    } else {
+        btn.disabled = true;
+    }
+}
+
+// Calendar Functions
+function getWeekNumber(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+function renderBookingCalendar() {
+    const container = document.getElementById('booking-calendar-days');
+    const titleEl = document.getElementById('booking-calendar-title');
+
+    const year = bookingCalendarDate.getFullYear();
+    const month = bookingCalendarDate.getMonth();
+
+    titleEl.textContent = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    // Find the Monday of the week containing the 1st of the month
+    const firstOfMonth = new Date(year, month, 1);
+    const dayOfWeek = firstOfMonth.getDay();
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday = 0
+    const calendarStart = new Date(firstOfMonth);
+    calendarStart.setDate(calendarStart.getDate() - daysToSubtract);
+
+    const today = new Date().toISOString().split('T')[0];
+    let html = '';
+
+    // Generate 6 weeks
+    let currentDate = new Date(calendarStart);
+    for (let week = 0; week < 6; week++) {
+        // Week number cell
+        const weekNumber = getWeekNumber(currentDate);
+        html += `<div class="border border-gray-200 p-2 min-h-12 flex items-center justify-center" style="background-color: #fef3c7;">
+            <span class="font-semibold text-sm text-orange-700">${weekNumber}</span>
+        </div>`;
+
+        // 7 days (Mon-Sun)
+        for (let day = 0; day < 7; day++) {
+            const dateYear = currentDate.getFullYear();
+            const dateMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const dateDay = String(currentDate.getDate()).padStart(2, '0');
+            const dateStr = `${dateYear}-${dateMonth}-${dateDay}`;
+
+            const isCurrentMonth = currentDate.getMonth() === month;
+            const isWeekend = day === 5 || day === 6; // Saturday or Sunday
+            const isToday = dateStr === today;
+            const isSelected = dateStr === selectedStartDate || dateStr === selectedEndDate;
+            const isInRange = selectedStartDate && selectedEndDate && dateStr > selectedStartDate && dateStr < selectedEndDate;
+
+            let bgColor = isWeekend ? '#fefce8' : 'white';
+            let textColor = isCurrentMonth ? '#374151' : '#9ca3af';
+
+            if (isSelected) {
+                bgColor = '#16a34a';
+                textColor = 'white';
+            } else if (isInRange) {
+                bgColor = '#bbf7d0';
+            }
+
+            const todayClass = isToday ? 'ring-2 ring-orange-500' : '';
+
+            html += `
+                <div class="border border-gray-200 p-2 min-h-12 flex items-center justify-center cursor-pointer hover:bg-gray-100 ${todayClass}"
+                     style="background-color: ${bgColor}; color: ${textColor};"
+                     onclick="selectCalendarDate('${dateStr}')">
+                    <span class="text-sm font-medium">${currentDate.getDate()}</span>
+                </div>
+            `;
+
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+    }
+
+    container.innerHTML = html;
+}
+
+function selectCalendarDate(dateStr) {
+    if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
+        // Start new selection
+        selectedStartDate = dateStr;
+        selectedEndDate = null;
+    } else {
+        // Complete selection
+        if (dateStr < selectedStartDate) {
+            selectedEndDate = selectedStartDate;
+            selectedStartDate = dateStr;
+        } else {
+            selectedEndDate = dateStr;
+        }
+    }
+
+    updateDateRangeDisplay();
+    renderBookingCalendar();
+    updateBookButton();
+}
+
+function updateDateRangeDisplay() {
+    const el = document.getElementById('selected-date-range');
+    if (selectedStartDate && selectedEndDate) {
+        el.textContent = `Selected: ${selectedStartDate} to ${selectedEndDate}`;
+    } else if (selectedStartDate) {
+        el.textContent = `Start: ${selectedStartDate} — Click to select end date`;
+    } else {
+        el.textContent = 'Click to select start date, then end date';
+    }
+}
+
+function bookingCalendarPrev() {
+    bookingCalendarDate.setMonth(bookingCalendarDate.getMonth() - 1);
+    renderBookingCalendar();
+}
+
+function bookingCalendarNext() {
+    bookingCalendarDate.setMonth(bookingCalendarDate.getMonth() + 1);
+    renderBookingCalendar();
+}
+
+function toggleCard(cardId) {
+    const content = document.getElementById(cardId + 'Content');
+    const toggle = document.getElementById(cardId + 'Toggle');
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        toggle.style.transform = 'rotate(0deg)';
+    } else {
+        content.style.display = 'none';
+        toggle.style.transform = 'rotate(-90deg)';
+    }
+}
+
+function updateDescCharCount() {
+    const textarea = document.getElementById('inline-description');
+    const counter = document.getElementById('desc-char-count');
+    counter.textContent = `${textarea.value.length} / 10,240`;
+}
+
+async function submitBooking() {
+    if (!selectedEquipmentForBooking) {
+        showToast('Please select equipment first', 'warning');
+        return;
+    }
+    if (!selectedStartDate || !selectedEndDate) {
+        showToast('Please select dates on the calendar', 'warning');
+        return;
+    }
+
+    const body = {
+        equipment_id: selectedEquipmentForBooking,
+        start_date: selectedStartDate,
+        end_date: selectedEndDate,
+        start_time: document.getElementById('inline-start-time').value + ':00',
+        end_time: document.getElementById('inline-end-time').value + ':00',
+        description: document.getElementById('inline-description').value,
+    };
+
+    const data = await apiCall('/api/bookings', 'POST', body);
+
+    if (data.success) {
+        showToast('Booking created successfully!', 'success');
+        resetBookingForm();
+    } else {
+        const msgEl = document.getElementById('booking-message');
+        msgEl.classList.remove('hidden');
+        msgEl.className = 'mt-4 p-4 rounded-lg bg-red-50 text-red-800';
+        msgEl.textContent = data.detail?.message || data.detail || 'Failed to create booking';
+    }
+}
+
+function resetBookingForm() {
+    selectedEquipmentForBooking = null;
+    selectedStartDate = null;
+    selectedEndDate = null;
+
+    document.getElementById('selected-equipment-display').classList.add('hidden');
+    document.getElementById('inline-start-time').value = '08:00';
+    document.getElementById('inline-end-time').value = '18:00';
+    document.getElementById('inline-description').value = '';
+    document.getElementById('desc-char-count').textContent = '0 / 10,240';
+    document.getElementById('booking-message').classList.add('hidden');
+
+    updateDateRangeDisplay();
+    updateBookButton();
+    renderEquipmentGrid();
+    renderBookingCalendar();
+}
+
+// ===============================
+// AI Assistant Section
+// ===============================
+function setAIPrompt(text) {
+    document.getElementById('ai-prompt').value = text;
+    updateAICharCount();
+}
+
+function updateAICharCount() {
+    const textarea = document.getElementById('ai-prompt');
+    const counter = document.getElementById('ai-char-count');
+    counter.textContent = `${textarea.value.length} / 500`;
+}
+
+function clearAIPrompt() {
+    document.getElementById('ai-prompt').value = '';
+    updateAICharCount();
+}
+
+function handleAIKeydown(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        askAI();
+    }
+}
+
+function newAISearch() {
+    document.getElementById('ai-results').classList.add('hidden');
+    document.getElementById('ai-error').classList.add('hidden');
+    document.getElementById('ai-prompt').value = '';
+    updateAICharCount();
+    document.getElementById('ai-prompt').focus();
+}
+
+async function askAI() {
+    const prompt = document.getElementById('ai-prompt').value.trim();
+    if (!prompt) {
+        showToast('Please enter a request', 'warning');
+        return;
+    }
+
+    const searchDays = document.getElementById('ai-search-days').value || 30;
+    const loadingEl = document.getElementById('ai-loading');
+    const errorEl = document.getElementById('ai-error');
+    const resultsEl = document.getElementById('ai-results');
+    const recommendationsEl = document.getElementById('ai-recommendations');
+    const explanationEl = document.getElementById('ai-explanation');
+
+    // Hide previous states
+    resultsEl.classList.add('hidden');
+    errorEl.classList.add('hidden');
+
+    // Show loading
+    loadingEl.classList.remove('hidden');
+
+    try {
+        const data = await apiCall('/api/ai/analyze', 'POST', {
+            prompt,
+            search_days: parseInt(searchDays)
+        });
+
+        loadingEl.classList.add('hidden');
+
+        if (data.error) {
+            errorEl.classList.remove('hidden');
+            document.getElementById('ai-error-message').textContent = data.error;
+            return;
+        }
+
+        if (data.recommendations?.length) {
+            explanationEl.textContent = data.explanation || '';
+            recommendationsEl.innerHTML = data.recommendations.map(r => `
+                <div class="p-4 border-2 border-gray-200 rounded-lg hover:border-orange-300 transition-all">
+                    <h4 class="font-semibold text-gray-800">${escapeHtml(r.name)}</h4>
+                    <p class="text-gray-600 text-sm mt-1">${escapeHtml(r.reasoning || 'Recommended by AI')}</p>
+                    ${r.available_dates ? `<p class="text-xs text-gray-500 mt-2">Available: ${r.available_dates}</p>` : ''}
+                    <button onclick="selectEquipmentFromAI(${r.equipment_id})" class="mt-3 text-orange-600 hover:text-orange-800 font-medium text-sm">
+                        Book this equipment →
+                    </button>
+                </div>
+            `).join('');
+            resultsEl.classList.remove('hidden');
+        } else {
+            errorEl.classList.remove('hidden');
+            document.getElementById('ai-error-message').textContent = 'No matching equipment found. Try describing your requirements differently.';
+        }
+    } catch (e) {
+        loadingEl.classList.add('hidden');
+        errorEl.classList.remove('hidden');
+        document.getElementById('ai-error-message').textContent = 'Failed to get AI recommendations. Please try again.';
+    }
+}
+
+function selectEquipmentFromAI(equipmentId) {
+    selectedEquipmentForBooking = equipmentId;
+    const eq = allEquipmentData.find(e => e.id === equipmentId);
+    if (eq) {
+        showSection('new-booking');
+        setTimeout(() => selectEquipmentForBooking(eq.id, eq.name, eq.type_name, eq.location), 100);
+    }
+}
+
+// ===============================
+// Reports Section
+// ===============================
+// Toggle collapsible sections
+function toggleSection(sectionId) {
+    const content = document.getElementById(sectionId + 'Content');
+    const toggle = document.getElementById(sectionId + 'Toggle');
+
+    if (content && toggle) {
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            toggle.style.transform = 'rotate(0deg)';
+        } else {
+            content.style.display = 'none';
+            toggle.style.transform = 'rotate(-90deg)';
+        }
+    }
+}
+
+// Apply booking filter
+function applyBookingFilter() {
+    loadBookingHistory();
+}
+
+// Load booking history
+async function loadBookingHistory() {
+    const startDate = document.getElementById('report-start-date').value;
+    const endDate = document.getElementById('report-end-date').value;
+
+    let url = '/api/bookings?status=completed';
+    if (startDate) url += `&start_date=${startDate}`;
+    if (endDate) url += `&end_date=${endDate}`;
+
+    const bookings = await apiCall(url);
+    const container = document.getElementById('bookingHistoryList');
+
+    if (bookings.bookings?.length) {
+        container.innerHTML = bookings.bookings.map(b => `
+            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="font-semibold text-gray-800">${escapeHtml(b.equipment_name || 'Equipment')}</div>
+                <div class="text-sm text-gray-600 mt-1">${b.start_date} - ${b.end_date}</div>
+                <div class="text-sm text-gray-500 mt-1">${b.start_time || ''} - ${b.end_time || ''}</div>
+                <div class="mt-2">
+                    <span class="badge ${b.status === 'completed' ? 'status-completed' : b.status === 'active' ? 'status-active' : 'status-cancelled'}">${b.status}</span>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        container.innerHTML = '<div class="text-center py-8 text-gray-500 text-sm col-span-full">No bookings found</div>';
+    }
+}
+
+async function loadReports() {
+    const startDate = document.getElementById('report-start-date').value;
+    const endDate = document.getElementById('report-end-date').value;
+
+    let statsUrl = '/api/reports/booking-stats';
+    let usageUrl = '/api/reports/equipment-usage';
+    let userActivityUrl = '/api/reports/user-activity';
+
+    if (startDate || endDate) {
+        const params = new URLSearchParams();
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        statsUrl += '?' + params.toString();
+        usageUrl += '?' + params.toString();
+        userActivityUrl += '?' + params.toString();
+    }
+
+    const [stats, usage, equipment, users, userActivity] = await Promise.all([
+        apiCall(statsUrl),
+        apiCall(usageUrl),
+        apiCall('/api/equipment'),
+        apiCall('/api/admin/users'),
+        apiCall(userActivityUrl)
+    ]);
+
+    // Populate Stats Cards
+    const statsContainer = document.getElementById('statsCardsContainer');
+    const totalBookings = stats.summary?.total || 0;
+    const activeBookings = stats.summary?.active || 0;
+    const equipmentCount = equipment.equipment?.length || 0;
+    const activeUsers = users.users?.filter(u => u.is_active).length || 0;
+    const totalHours = stats.summary?.total_hours || 0;
+
+    statsContainer.innerHTML = `
+        <div class="card">
+            <div class="card-body text-center py-4">
+                <div class="text-3xl font-bold text-gray-800">${totalBookings}</div>
+                <div class="text-sm text-gray-500">Total Bookings</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body text-center py-4">
+                <div class="text-3xl font-bold text-green-600">${activeBookings}</div>
+                <div class="text-sm text-gray-500">Active</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body text-center py-4">
+                <div class="text-3xl font-bold text-blue-600">${equipmentCount}</div>
+                <div class="text-sm text-gray-500">Equipment</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body text-center py-4">
+                <div class="text-3xl font-bold text-purple-600">${activeUsers}</div>
+                <div class="text-sm text-gray-500">Active Users</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body text-center py-4">
+                <div class="text-3xl font-bold text-orange-600">${totalHours}</div>
+                <div class="text-sm text-gray-500">Total Hours</div>
+            </div>
+        </div>
+    `;
+
+    // Populate Equipment Utilization Table
+    const utilizationBody = document.getElementById('equipmentUtilizationBody');
+    if (usage.equipment?.length) {
+        utilizationBody.innerHTML = usage.equipment.map(e => {
+            const pct = Math.min(100, (e.total_bookings || 0) * 10);
+            const color = pct > 70 ? 'green' : pct > 30 ? 'yellow' : 'red';
+            return `
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Equipment</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <td class="py-3">${escapeHtml(e.name)}</td>
+                    <td class="py-3">${escapeHtml(e.location || '-')}</td>
+                    <td class="py-3 text-right">${e.total_bookings || 0}</td>
+                    <td class="py-3 text-right">${e.total_hours || 0}</td>
+                    <td class="py-3">
+                        <div class="flex items-center gap-2">
+                            <div class="progress-bar flex-1">
+                                <div class="progress-bar-fill ${color}" style="width: ${pct}%"></div>
+                            </div>
+                            <span class="text-xs text-gray-500 w-10">${pct}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } else {
+        utilizationBody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No utilization data</td></tr>';
+    }
+
+    // Populate User Activity Table
+    const userActivityBody = document.getElementById('userActivityBody');
+    if (userActivity.users?.length) {
+        userActivityBody.innerHTML = userActivity.users.map(u => `
+            <tr>
+                <td class="py-3">${escapeHtml(u.name || u.email)}</td>
+                <td class="py-3 text-right">${u.active_bookings || 0}</td>
+                <td class="py-3 text-right">${u.cancelled_bookings || 0}</td>
+                <td class="py-3 text-right">${u.completed_bookings || 0}</td>
+                <td class="py-3 text-right">${(u.avg_hours_per_booking || 0).toFixed(1)}</td>
+                <td class="py-3 text-right">${u.total_hours || 0}</td>
+            </tr>
+        `).join('');
+    } else {
+        userActivityBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">No user activity data</td></tr>';
+    }
+
+    // Populate Top Equipment
+    const topEquipmentContainer = document.getElementById('topEquipmentContainer');
+    const sortedEquipment = (usage.equipment || [])
+        .sort((a, b) => (b.total_bookings || 0) - (a.total_bookings || 0))
+        .slice(0, 10);
+
+    if (sortedEquipment.length) {
+        topEquipmentContainer.innerHTML = sortedEquipment.map((e, i) => `
+            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-sm">${i + 1}</div>
+                    <div class="flex-1">
+                        <div class="font-semibold text-gray-800">${escapeHtml(e.name)}</div>
+                        <div class="text-sm text-gray-500">${escapeHtml(e.location || 'No location')}</div>
+                    </div>
+                </div>
+                <div class="mt-3 flex justify-between text-sm">
+                    <span class="text-gray-600">${e.total_bookings || 0} bookings</span>
+                    <span class="text-gray-600">${e.total_hours || 0} hours</span>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        topEquipmentContainer.innerHTML = '<div class="text-center py-8 text-gray-500 text-sm col-span-full">No equipment data</div>';
+    }
+
+    // Also load booking history
+    loadBookingHistory();
+}
+
+function exportReportsCSV() {
+    showToast('Export feature coming soon', 'info');
+}
+
+// ===============================
+// Type Access Section (Manager)
+// ===============================
+async function loadTypeAccessSection() {
+    const typesData = await apiCall('/api/admin/equipment-types');
+    const filter = document.getElementById('type-access-filter');
+    filter.innerHTML = '<option value="">Select Equipment Type...</option>' +
+        (typesData.types || []).map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+}
+
+async function loadTypeAccess() {
+    const typeId = document.getElementById('type-access-filter').value;
+    const container = document.getElementById('type-access-table');
+
+    if (!typeId) {
+        container.innerHTML = '<div class="text-gray-500 text-center py-4">Select an equipment type to manage access</div>';
+        return;
+    }
+
+    const users = await apiCall('/api/admin/users');
+    const typeUsers = await apiCall(`/api/equipment-types/${typeId}/users`);
+    const grantedUserIds = new Set((typeUsers.users || []).map(u => u.id));
+
+    container.innerHTML = `
+        <table class="w-full">
+            <thead>
+                <tr>
+                    <th class="text-left">User</th>
+                    <th class="text-left">Email</th>
+                    <th class="text-left">Role</th>
+                    <th class="text-center">Has Access</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
-                ${data.bookings.map(b => `
+            <tbody>
+                ${(users.users || []).map(u => `
                     <tr>
-                        <td class="px-6 py-4">${escapeHtml(b.equipment_name || 'N/A')}</td>
-                        <td class="px-6 py-4">${b.start_date} - ${b.end_date}</td>
-                        <td class="px-6 py-4">${b.start_time?.slice(0,5)} - ${b.end_time?.slice(0,5)}</td>
-                        <td class="px-6 py-4">
-                            <span class="px-2 py-1 text-xs rounded ${b.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
-                                ${b.status}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4">
-                            ${b.status === 'active' ? `<button onclick="cancelBooking(${b.id})" class="text-red-600 hover:underline">Cancel</button>` : ''}
+                        <td>${escapeHtml(u.name)}</td>
+                        <td>${escapeHtml(u.email)}</td>
+                        <td><span class="role-badge role-badge-${u.role_name?.toLowerCase()}">${u.role_name}</span></td>
+                        <td class="text-center">
+                            <div class="toggle-switch ${grantedUserIds.has(u.id) ? 'active' : ''}"
+                                 onclick="toggleTypeAccess(${typeId}, ${u.id}, ${!grantedUserIds.has(u.id)})"></div>
                         </td>
                     </tr>
                 `).join('')}
@@ -293,221 +1815,781 @@ async function loadBookings() {
     `;
 }
 
-// Load equipment
-async function loadEquipment() {
-    const data = await apiCall('/api/equipment');
-    const list = document.getElementById('equipment-list');
+async function toggleTypeAccess(typeId, userId, grant) {
+    const endpoint = grant
+        ? `/api/equipment-types/${typeId}/users/${userId}/grant`
+        : `/api/equipment-types/${typeId}/users/${userId}/revoke`;
+    const method = grant ? 'POST' : 'DELETE';
 
-    if (!data.equipment?.length) {
-        list.innerHTML = '<div class="bg-white rounded-lg shadow p-8 text-center text-gray-500">No equipment found</div>';
+    const result = await apiCall(endpoint, method);
+    if (result.success) {
+        showToast(grant ? 'Access granted' : 'Access revoked', 'success');
+        loadTypeAccess();
+    } else {
+        showToast('Failed to update access', 'error');
+    }
+}
+
+// ===============================
+// User Management Section (Admin)
+// ===============================
+let registrationSettings = null;
+let allowedEmailsData = [];
+let parsedImportEmails = [];
+
+async function loadUserManagement() {
+    // Load users
+    const users = await apiCall('/api/admin/users');
+    allUsersData = users.users || [];
+
+    // Sort: active users first, then alphabetical by name
+    allUsersData.sort((a, b) => {
+        if (a.is_active !== b.is_active) return b.is_active - a.is_active;
+        return (a.name || '').localeCompare(b.name || '');
+    });
+
+    const tbody = document.getElementById('users-table-body');
+    tbody.innerHTML = allUsersData.map(u => {
+        const lastLogin = u.last_login_at ? new Date(u.last_login_at).toLocaleDateString() : 'Never';
+        const statusBadge = u.is_active
+            ? '<span class="badge status-active">Active</span>'
+            : '<span class="inline-block px-3 py-1 text-xs font-medium rounded-full bg-gray-200 text-gray-600">Inactive</span>';
+        const roleBadgeClass = {
+            'admin': 'badge-admin',
+            'manager': 'badge-manager',
+            'user': 'badge-user'
+        }[u.role_name?.toLowerCase()] || 'badge-user';
+
+        return `
+            <tr class="hover:bg-gray-50">
+                <td class="py-3 px-4 font-medium text-gray-900">${escapeHtml(u.email)}</td>
+                <td class="py-3 px-4 text-gray-600">${escapeHtml(u.name)}</td>
+                <td class="py-3 px-4">
+                    <span class="badge ${roleBadgeClass}">
+                        ${escapeHtml((u.role_name || 'user').charAt(0).toUpperCase() + (u.role_name || 'user').slice(1))}
+                    </span>
+                </td>
+                <td class="py-3 px-4">${statusBadge}</td>
+                <td class="py-3 px-4 text-gray-600 text-sm">${lastLogin}</td>
+                <td class="py-3 px-4">
+                    <div class="flex gap-2">
+                        <button onclick="openRoleModal(${u.id}, '${escapeHtml(u.name)}', '${escapeHtml(u.role_name || 'user')}')"
+                            class="text-orange-600 hover:text-orange-800 text-sm font-medium">
+                            Change Role
+                        </button>
+                        <button onclick="toggleUserStatus(${u.id}, ${u.is_active})"
+                            class="text-gray-600 hover:text-gray-800 text-sm font-medium">
+                            ${u.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    // Load registration settings
+    await loadRegistrationSettings();
+
+    // Load service mode status
+    await loadServiceModeStatus();
+}
+
+// Registration Settings
+async function loadRegistrationSettings() {
+    try {
+        const result = await apiCall('/api/admin/registration-settings');
+        if (result.success) {
+            registrationSettings = result;
+
+            // Update toggles
+            document.getElementById('domainRegistrationToggle').checked = result.allow_domain_registration;
+            document.getElementById('emailRegistrationToggle').checked = result.allow_email_registration;
+
+            // Populate domain input
+            const domainInput = document.getElementById('allowedDomainsInput');
+            if (domainInput) {
+                domainInput.value = result.domain || '';
+            }
+
+            // Show/hide email import section based on email registration toggle
+            const emailSection = document.getElementById('emailImportSection');
+            if (result.allow_email_registration) {
+                emailSection.classList.remove('hidden');
+                await loadAllowedEmails();
+            } else {
+                emailSection.classList.add('hidden');
+            }
+        } else {
+            console.error('Failed to load registration settings:', result);
+        }
+    } catch (error) {
+        console.error('Error loading registration settings:', error);
+    }
+}
+
+async function updateRegistrationSettings() {
+    const domainEnabled = document.getElementById('domainRegistrationToggle').checked;
+    const emailEnabled = document.getElementById('emailRegistrationToggle').checked;
+
+    // Validate: at least one must be enabled
+    if (!domainEnabled && !emailEnabled) {
+        showToast('At least one registration method must be enabled', 'error');
+        // Revert the toggle
+        setTimeout(() => loadRegistrationSettings(), 100);
         return;
     }
 
-    list.innerHTML = data.equipment.map(e => `
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex justify-between">
+    try {
+        const result = await apiCall('/api/admin/registration-settings', 'PUT', {
+            allow_domain_registration: domainEnabled,
+            allow_email_registration: emailEnabled
+        });
+
+        if (result.success) {
+            showToast('Registration settings updated', 'success');
+            await loadRegistrationSettings();
+        } else {
+            showToast(result.detail || 'Failed to update settings', 'error');
+            await loadRegistrationSettings(); // Revert toggles
+        }
+    } catch (error) {
+        showToast('Failed to update settings: ' + error.message, 'error');
+        await loadRegistrationSettings(); // Revert toggles
+    }
+}
+
+async function saveDomainSettings() {
+    const domainInput = document.getElementById('allowedDomainsInput');
+    const domains = domainInput.value.trim();
+
+    if (!domains) {
+        showToast('Please enter at least one domain', 'error');
+        return;
+    }
+
+    // Parse and clean domains
+    const domainList = domains.split(',').map(d => d.trim().toLowerCase()).filter(d => d);
+
+    // Validate domain format
+    for (const domain of domainList) {
+        if (!domain.includes('.') || domain.includes('@')) {
+            showToast(`Invalid domain format: "${domain}". Enter domain without @ (e.g., company.com)`, 'error');
+            return;
+        }
+    }
+
+    try {
+        const result = await apiCall('/api/admin/registration-settings', 'PUT', {
+            allowed_domains: domainList
+        });
+
+        if (result.success) {
+            showToast('Domain settings saved', 'success');
+            await loadRegistrationSettings();
+        } else {
+            showToast(result.detail || 'Failed to save domain settings', 'error');
+        }
+    } catch (error) {
+        showToast('Failed to save domain settings: ' + error.message, 'error');
+    }
+}
+
+// Allowed Emails Management
+async function loadAllowedEmails() {
+    const result = await apiCall('/api/admin/registration/allowed-emails');
+    if (result.success) {
+        allowedEmailsData = result.emails || [];
+        document.getElementById('allowedEmailsCount').textContent = allowedEmailsData.length;
+
+        const tbody = document.getElementById('allowedEmailsTableBody');
+        if (allowedEmailsData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No allowed emails yet. Click "Import Emails" to add.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = allowedEmailsData.map(e => {
+            const statusBadge = e.status === 'registered'
+                ? '<span class="inline-block px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Registered</span>'
+                : '<span class="inline-block px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">Pending</span>';
+            const invitedDate = e.invited_at ? new Date(e.invited_at).toLocaleDateString() : '-';
+            const canRemove = e.status !== 'registered';
+
+            return `
+                <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4 font-mono text-sm">${escapeHtml(e.email)}</td>
+                    <td class="py-3 px-4">${escapeHtml(e.name || '-')}</td>
+                    <td class="py-3 px-4">${statusBadge}</td>
+                    <td class="py-3 px-4 text-sm text-gray-600">${invitedDate}</td>
+                    <td class="py-3 px-4">
+                        ${canRemove ? `<button onclick="removeAllowedEmail(${e.id})" class="text-red-600 hover:text-red-800 text-sm">Remove</button>` : '<span class="text-gray-400 text-sm">-</span>'}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+async function removeAllowedEmail(emailId) {
+    if (!confirm('Remove this email from the allowlist?')) return;
+
+    const result = await apiCall(`/api/admin/registration/allowed-emails/${emailId}`, 'DELETE');
+    if (result.success) {
+        showToast('Email removed from allowlist', 'success');
+        await loadAllowedEmails();
+    } else {
+        showToast(result.detail || 'Failed to remove email', 'error');
+    }
+}
+
+// Import Emails Modal
+function openImportEmailsModal() {
+    document.getElementById('importEmailsTextarea').value = '';
+    document.getElementById('importPreviewSection').classList.add('hidden');
+    document.getElementById('importErrorSection').classList.add('hidden');
+    parsedImportEmails = [];
+    document.getElementById('importEmailsModalOverlay').classList.remove('hidden');
+}
+
+function closeImportEmailsModal() {
+    document.getElementById('importEmailsModalOverlay').classList.add('hidden');
+}
+
+function previewImportEmails() {
+    const textarea = document.getElementById('importEmailsTextarea');
+    const lines = textarea.value.split('\n').filter(line => line.trim());
+
+    parsedImportEmails = [];
+    const errors = [];
+
+    lines.forEach((line, idx) => {
+        const parts = line.split(',').map(p => p.trim());
+        const email = parts[0]?.toLowerCase();
+        const name = parts[1] || '';
+
+        if (!email) return;
+
+        // Basic email validation
+        if (!email.includes('@') || !email.includes('.')) {
+            errors.push(`Line ${idx + 1}: Invalid email format "${email}"`);
+            return;
+        }
+
+        parsedImportEmails.push({ email, name });
+    });
+
+    // Show errors if any
+    const errorSection = document.getElementById('importErrorSection');
+    const errorList = document.getElementById('importErrorList');
+    if (errors.length > 0) {
+        errorList.innerHTML = errors.map(e => `<li>${escapeHtml(e)}</li>`).join('');
+        errorSection.classList.remove('hidden');
+    } else {
+        errorSection.classList.add('hidden');
+    }
+
+    // Show preview
+    const previewSection = document.getElementById('importPreviewSection');
+    const previewCount = document.getElementById('importPreviewCount');
+    const previewBody = document.getElementById('importPreviewTableBody');
+
+    if (parsedImportEmails.length > 0) {
+        previewCount.textContent = parsedImportEmails.length;
+        previewBody.innerHTML = parsedImportEmails.map(e => `
+            <tr>
+                <td class="py-2 px-3 font-mono text-sm">${escapeHtml(e.email)}</td>
+                <td class="py-2 px-3">${escapeHtml(e.name || '-')}</td>
+                <td class="py-2 px-3"><span class="text-green-600">Ready</span></td>
+            </tr>
+        `).join('');
+        previewSection.classList.remove('hidden');
+    } else {
+        previewSection.classList.add('hidden');
+    }
+}
+
+async function confirmImportEmails() {
+    if (parsedImportEmails.length === 0) {
+        previewImportEmails();
+        if (parsedImportEmails.length === 0) {
+            showToast('No valid emails to import', 'error');
+            return;
+        }
+    }
+
+    const result = await apiCall('/api/admin/registration/allowed-emails/import', 'POST', {
+        emails: parsedImportEmails
+    });
+
+    if (result.success) {
+        showToast(`Imported ${result.added} emails, updated ${result.updated || 0}, skipped ${result.skipped}`, 'success');
+        closeImportEmailsModal();
+        await loadAllowedEmails();
+    } else {
+        showToast(result.detail || 'Failed to import emails', 'error');
+    }
+}
+
+// Service Mode
+async function loadServiceModeStatus() {
+    const result = await apiCall('/api/admin/service-mode');
+    if (result.success) {
+        document.getElementById('serviceModeToggle').checked = result.enabled;
+    }
+}
+
+async function toggleServiceMode() {
+    const toggle = document.getElementById('serviceModeToggle');
+    const newState = toggle.checked;
+
+    if (newState) {
+        if (!confirm('⚠️ Enable Service Mode?\n\nOnly administrators will be able to log in. All other users will be prevented from accessing the system.\n\nAre you sure?')) {
+            toggle.checked = false;
+            return;
+        }
+    }
+
+    const result = await apiCall('/api/admin/service-mode', 'PUT', { enabled: newState });
+    if (result.success) {
+        showToast(newState ? 'Service mode enabled' : 'Service mode disabled', 'success');
+    } else {
+        showToast(result.detail || 'Failed to update service mode', 'error');
+        toggle.checked = !newState; // Revert
+    }
+}
+
+// Token Management
+async function deleteOldTokens() {
+    const daysInput = document.getElementById('tokenAgeDays');
+    const days = parseInt(daysInput.value);
+
+    // Validate input (0-180 range)
+    if (isNaN(days) || days < 0 || days > 180) {
+        showToast('Please enter a valid number of days between 0 and 180', 'error');
+        return;
+    }
+
+    const confirmMsg = `⚠️ WARNING: This will delete all authentication tokens older than ${days} days.\n\nAffected users will need to request a new registration link to access the system.\n\nAre you sure you want to proceed?`;
+
+    if (!confirm(confirmMsg)) return;
+
+    const result = await apiCall('/api/admin/tokens/delete-old', 'POST', { days });
+
+    if (result.success) {
+        showToast(`Deleted ${result.deleted_count} tokens. ${result.affected_users} users affected.`, 'success');
+    } else {
+        showToast(result.detail || 'Failed to delete tokens', 'error');
+    }
+}
+
+// Role Modal Functions (enhanced)
+function openRoleModal(userId, userName, currentRole) {
+    document.getElementById('role-modal-user-id').value = userId;
+
+    // Pre-check the current role
+    const roleValue = { 'admin': '1', 'manager': '2', 'user': '3' }[currentRole.toLowerCase()] || '3';
+    const radio = document.querySelector(`input[name="new-role"][value="${roleValue}"]`);
+    if (radio) radio.checked = true;
+
+    document.getElementById('role-modal').classList.remove('hidden');
+}
+
+function showRoleModal(userId, currentRoleId) {
+    document.getElementById('role-modal-user-id').value = userId;
+    document.querySelector(`input[name="new-role"][value="${currentRoleId}"]`).checked = true;
+    document.getElementById('role-modal').classList.remove('hidden');
+}
+
+function hideRoleModal() {
+    document.getElementById('role-modal').classList.add('hidden');
+}
+
+async function saveUserRole() {
+    const userId = document.getElementById('role-modal-user-id').value;
+    const newRole = document.querySelector('input[name="new-role"]:checked').value;
+
+    const result = await apiCall(`/api/admin/users/${userId}/role`, 'PUT', { role_id: parseInt(newRole) });
+    if (result.success) {
+        showToast('Role updated', 'success');
+        hideRoleModal();
+        loadUserManagement();
+    } else {
+        showToast(result.detail || 'Failed to update role', 'error');
+    }
+}
+
+async function toggleUserStatus(userId, isActive) {
+    const action = isActive ? 'deactivate' : 'activate';
+    if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+
+    const result = await apiCall(`/api/admin/users/${userId}/status`, 'PUT', { is_active: !isActive });
+    if (result.success) {
+        showToast(isActive ? 'User deactivated' : 'User activated', 'success');
+        loadUserManagement();
+    } else {
+        showToast(result.detail || 'Failed to update status', 'error');
+    }
+}
+
+// ===============================
+// Equipment Management Section (Admin)
+// ===============================
+async function loadEquipmentManagement() {
+    const [eqData, typesData] = await Promise.all([
+        apiCall('/api/equipment'),
+        apiCall('/api/admin/equipment-types')
+    ]);
+
+    allEquipmentData = eqData.equipment || [];
+    allEquipmentTypes = typesData.types || [];
+
+    // Render types
+    const typesList = document.getElementById('types-list');
+    typesList.innerHTML = allEquipmentTypes.map(t => `
+        <div class="p-4 border rounded-lg">
+            <div class="flex justify-between items-start">
                 <div>
-                    <h3 class="font-semibold text-lg">${escapeHtml(e.name)}</h3>
-                    <p class="text-gray-600 text-sm">${escapeHtml(e.type_name || 'No type')}</p>
-                    <p class="text-gray-500 text-sm mt-1">${escapeHtml(e.location || 'No location')}</p>
+                    <div class="font-medium">${escapeHtml(t.name)}</div>
+                    <div class="text-sm text-gray-500">${escapeHtml(t.description || 'No description')}</div>
                 </div>
-                <button onclick="showBookingModalForEquipment(${e.id}, '${escapeHtml(e.name)}')" class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 h-fit">
-                    Book
-                </button>
+                <button onclick="showTypeModal(${t.id})" class="text-orange-600 hover:underline text-sm">Edit</button>
             </div>
-            ${e.description ? `<p class="text-gray-600 mt-3 text-sm">${escapeHtml(e.description.slice(0, 200))}${e.description.length > 200 ? '...' : ''}</p>` : ''}
+        </div>
+    `).join('');
+
+    // Render equipment table
+    const tbody = document.getElementById('equipment-table-body');
+    tbody.innerHTML = allEquipmentData.map(e => `
+        <tr>
+            <td>
+                <div class="font-medium">${escapeHtml(e.name)}</div>
+                <div class="text-xs text-gray-500">${escapeHtml(e.description?.slice(0, 50) || '')}${e.description?.length > 50 ? '...' : ''}</div>
+            </td>
+            <td>${escapeHtml(e.location || '-')}</td>
+            <td>${escapeHtml(e.type_name || '-')}</td>
+            <td class="text-center">${e.managers?.length || 0}</td>
+            <td class="text-center">
+                <span class="badge ${e.is_active ? 'status-active' : 'status-cancelled'}">${e.is_active ? 'Active' : 'Inactive'}</span>
+            </td>
+            <td class="text-right">
+                <button onclick="showEquipmentModal(${e.id})" class="text-orange-600 hover:underline text-sm">Edit</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function showEquipmentModal(equipmentId = null) {
+    const modal = document.getElementById('equipment-modal');
+    const title = document.getElementById('equipment-modal-title');
+    const form = document.getElementById('equipment-form');
+    const typeSelect = document.getElementById('equipment-type');
+
+    // Populate type dropdown
+    typeSelect.innerHTML = '<option value="">No type</option>' +
+        allEquipmentTypes.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+
+    if (equipmentId) {
+        title.textContent = 'Edit Equipment';
+        const eq = allEquipmentData.find(e => e.id === equipmentId);
+        if (eq) {
+            document.getElementById('equipment-modal-id').value = equipmentId;
+            document.getElementById('equipment-name').value = eq.name || '';
+            document.getElementById('equipment-description').value = eq.description || '';
+            document.getElementById('equipment-location').value = eq.location || '';
+            document.getElementById('equipment-type').value = eq.type_id || '';
+            document.getElementById('equipment-calibration').value = eq.next_calibration_date || '';
+        }
+    } else {
+        title.textContent = 'Add Equipment';
+        form.reset();
+        document.getElementById('equipment-modal-id').value = '';
+    }
+
+    modal.classList.remove('hidden');
+}
+
+function hideEquipmentModal() {
+    document.getElementById('equipment-modal').classList.add('hidden');
+}
+
+async function saveEquipment() {
+    const id = document.getElementById('equipment-modal-id').value;
+    const body = {
+        name: document.getElementById('equipment-name').value,
+        description: document.getElementById('equipment-description').value,
+        location: document.getElementById('equipment-location').value,
+        type_id: document.getElementById('equipment-type').value || null,
+        next_calibration_date: document.getElementById('equipment-calibration').value || null,
+    };
+
+    const url = id ? `/api/equipment/${id}` : '/api/equipment';
+    const method = id ? 'PUT' : 'POST';
+
+    const result = await apiCall(url, method, body);
+    if (result.success || result.equipment) {
+        showToast(id ? 'Equipment updated' : 'Equipment created', 'success');
+        hideEquipmentModal();
+        loadEquipmentManagement();
+    } else {
+        showToast(result.detail || 'Failed to save equipment', 'error');
+    }
+}
+
+function showTypeModal(typeId = null) {
+    const modal = document.getElementById('type-modal');
+    const title = document.getElementById('type-modal-title');
+    const form = document.getElementById('type-form');
+
+    if (typeId) {
+        title.textContent = 'Edit Equipment Type';
+        const type = allEquipmentTypes.find(t => t.id === typeId);
+        if (type) {
+            document.getElementById('type-modal-id').value = typeId;
+            document.getElementById('type-name').value = type.name || '';
+            document.getElementById('type-description').value = type.description || '';
+            document.getElementById('type-manager-notifications').checked = type.manager_notifications_enabled !== false;
+        }
+    } else {
+        title.textContent = 'Add Equipment Type';
+        form.reset();
+        document.getElementById('type-modal-id').value = '';
+        document.getElementById('type-manager-notifications').checked = true;
+    }
+
+    modal.classList.remove('hidden');
+}
+
+function hideTypeModal() {
+    document.getElementById('type-modal').classList.add('hidden');
+}
+
+async function saveType() {
+    const id = document.getElementById('type-modal-id').value;
+    const body = {
+        name: document.getElementById('type-name').value,
+        description: document.getElementById('type-description').value,
+        manager_notifications_enabled: document.getElementById('type-manager-notifications').checked,
+    };
+
+    const url = id ? `/api/admin/equipment-types/${id}` : '/api/admin/equipment-types';
+    const method = id ? 'PUT' : 'POST';
+
+    const result = await apiCall(url, method, body);
+    if (result.success || result.type) {
+        showToast(id ? 'Type updated' : 'Type created', 'success');
+        hideTypeModal();
+        loadEquipmentManagement();
+    } else {
+        showToast(result.detail || 'Failed to save type', 'error');
+    }
+}
+
+// ===============================
+// Cron Jobs Section (Admin)
+// ===============================
+async function loadCronJobs() {
+    const data = await apiCall('/api/admin/cron-jobs');
+    const container = document.getElementById('cron-jobs-list');
+
+    if (!data.jobs?.length) {
+        container.innerHTML = '<div class="text-gray-500">No cron jobs configured</div>';
+        return;
+    }
+
+    container.innerHTML = data.jobs.map(j => `
+        <div class="card">
+            <div class="card-body">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="font-semibold">${escapeHtml(j.job_name)}</div>
+                        <div class="text-sm text-gray-500">${escapeHtml(j.description)}</div>
+                        <div class="text-xs text-gray-400 mt-1">Schedule: ${j.cron_schedule}</div>
+                        ${j.last_run_at ? `<div class="text-xs text-gray-400">Last run: ${j.last_run_at} (${j.last_run_status})</div>` : ''}
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="toggle-switch ${j.is_enabled ? 'active' : ''}"
+                             onclick="toggleCronJob(${j.id}, ${!j.is_enabled})"></div>
+                        <button onclick="triggerCronJob(${j.id})" class="btn-secondary text-sm">Run Now</button>
+                    </div>
+                </div>
+            </div>
         </div>
     `).join('');
 }
 
-// Load reports
-async function loadReports() {
-    const stats = await apiCall('/api/reports/booking-stats');
-    if (stats.summary) {
-        document.getElementById('stat-total-bookings').textContent = stats.summary.total || 0;
-        document.getElementById('stat-active-bookings').textContent = stats.summary.active || 0;
-    }
-
-    const equipment = await apiCall('/api/equipment');
-    document.getElementById('stat-equipment-count').textContent = equipment.equipment?.length || 0;
-
-    const usage = await apiCall('/api/reports/equipment-usage');
-    const usageList = document.getElementById('equipment-usage-list');
-
-    if (usage.equipment?.length) {
-        usageList.innerHTML = usage.equipment.map(e => `
-            <div class="flex justify-between items-center py-2 border-b">
-                <span>${escapeHtml(e.name)}</span>
-                <span class="text-gray-500">${e.total_bookings} bookings</span>
-            </div>
-        `).join('');
+async function toggleCronJob(jobId, enable) {
+    const result = await apiCall(`/api/admin/cron-jobs/${jobId}`, 'PUT', { is_enabled: enable });
+    if (result.success) {
+        showToast(enable ? 'Job enabled' : 'Job disabled', 'success');
+        loadCronJobs();
     } else {
-        usageList.innerHTML = '<p class="text-gray-500">No usage data</p>';
+        showToast('Failed to update job', 'error');
     }
 }
 
-// Load admin data
-async function loadAdminData() {
-    const users = await apiCall('/api/admin/users');
-    const usersList = document.getElementById('users-list');
+async function triggerCronJob(jobId) {
+    const result = await apiCall(`/api/admin/cron-jobs/${jobId}/trigger`, 'POST');
+    if (result.success) {
+        showToast('Job triggered successfully', 'success');
+        loadCronJobs();
+    } else {
+        showToast(result.detail || 'Failed to trigger job', 'error');
+    }
+}
 
-    if (users.users?.length) {
-        usersList.innerHTML = `
-            <table class="w-full">
-                <thead>
-                    <tr class="border-b">
-                        <th class="text-left py-2">Name</th>
-                        <th class="text-left py-2">Email</th>
-                        <th class="text-left py-2">Role</th>
-                        <th class="text-left py-2">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${users.users.map(u => `
-                        <tr class="border-b">
-                            <td class="py-2">${escapeHtml(u.name)}</td>
-                            <td class="py-2">${escapeHtml(u.email)}</td>
-                            <td class="py-2">${u.role_name}</td>
-                            <td class="py-2">
-                                <span class="px-2 py-1 text-xs rounded ${u.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                                    ${u.is_active ? 'Active' : 'Inactive'}
-                                </span>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
+// ===============================
+// AI Rules Section (Admin)
+// ===============================
+async function loadAIRules() {
+    const data = await apiCall('/api/admin/ai-specification-rules');
+    const container = document.getElementById('ai-rules-list');
+
+    if (!data.rules?.length) {
+        container.innerHTML = '<div class="text-gray-500">No AI rules configured</div>';
+        return;
     }
 
-    const jobs = await apiCall('/api/admin/cron-jobs');
-    const jobsList = document.getElementById('cron-jobs-list');
-
-    if (jobs.jobs?.length) {
-        jobsList.innerHTML = jobs.jobs.map(j => `
-            <div class="flex justify-between items-center py-2 border-b">
-                <div>
-                    <span class="font-medium">${escapeHtml(j.job_name)}</span>
-                    <span class="text-gray-500 text-sm ml-2">${j.cron_schedule}</span>
+    container.innerHTML = data.rules.map(r => `
+        <div class="card">
+            <div class="card-body">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="badge ${r.rule_type === 'general' ? 'status-active' : r.rule_type === 'parameter' ? 'status-pending' : 'status-completed'}">${r.rule_type}</span>
+                            ${r.parameter_name ? `<span class="text-sm font-medium">${r.parameter_name} (${r.parameter_unit || '-'})</span>` : ''}
+                            ${!r.is_enabled ? '<span class="text-xs text-red-500">Disabled</span>' : ''}
+                        </div>
+                        <div class="text-sm text-gray-600 mt-2 whitespace-pre-wrap">${escapeHtml(r.prompt_text?.slice(0, 200))}${r.prompt_text?.length > 200 ? '...' : ''}</div>
+                    </div>
+                    <button onclick="showAIRuleModal(${r.id})" class="text-orange-600 hover:underline text-sm">Edit</button>
                 </div>
-                <span class="px-2 py-1 text-xs rounded ${j.is_enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
-                    ${j.is_enabled ? 'Enabled' : 'Disabled'}
-                </span>
             </div>
-        `).join('');
-    }
+        </div>
+    `).join('');
 }
 
-// AI Assistant
-async function askAI() {
-    const prompt = document.getElementById('ai-prompt').value;
-    if (!prompt) return;
+function showAIRuleModal(ruleId = null) {
+    const modal = document.getElementById('ai-rule-modal');
+    const title = document.getElementById('ai-rule-modal-title');
 
-    const results = document.getElementById('ai-results');
-    const recommendations = document.getElementById('ai-recommendations');
-
-    results.classList.remove('hidden');
-    recommendations.innerHTML = '<div class="text-gray-500">Analyzing...</div>';
-
-    const data = await apiCall('/api/ai/analyze', 'POST', { prompt });
-
-    if (data.recommendations?.length) {
-        recommendations.innerHTML = data.recommendations.map(r => `
-            <div class="border rounded-lg p-4 mb-3">
-                <h4 class="font-semibold">${escapeHtml(r.name)}</h4>
-                <p class="text-gray-600 text-sm mt-1">${escapeHtml(r.reasoning || 'Recommended by AI')}</p>
-                <button onclick="showBookingModalForEquipment(${r.equipment_id}, '${escapeHtml(r.name)}')" class="text-blue-600 hover:underline mt-2 text-sm">
-                    Book this equipment
-                </button>
-            </div>
-        `).join('');
+    if (ruleId) {
+        title.textContent = 'Edit AI Rule';
+        // Load rule data
+        apiCall(`/api/admin/ai-specification-rules`).then(data => {
+            const rule = (data.rules || []).find(r => r.id === ruleId);
+            if (rule) {
+                document.getElementById('ai-rule-modal-id').value = ruleId;
+                document.getElementById('ai-rule-type').value = rule.rule_type;
+                document.getElementById('ai-rule-param-name').value = rule.parameter_name || '';
+                document.getElementById('ai-rule-param-unit').value = rule.parameter_unit || '';
+                document.getElementById('ai-rule-prompt').value = rule.prompt_text || '';
+                document.getElementById('ai-rule-enabled').checked = rule.is_enabled;
+                onRuleTypeChange();
+            }
+        });
     } else {
-        recommendations.innerHTML = '<p class="text-gray-500">No recommendations found. Try describing your requirements differently.</p>';
+        title.textContent = 'Add AI Rule';
+        document.getElementById('ai-rule-form').reset();
+        document.getElementById('ai-rule-modal-id').value = '';
+        document.getElementById('ai-rule-enabled').checked = true;
+        onRuleTypeChange();
     }
+
+    modal.classList.remove('hidden');
 }
 
-// Booking modal
-let selectedEquipmentId = null;
-
-function showNewBookingModal() {
-    loadEquipmentOptions();
-    document.getElementById('booking-modal').classList.remove('hidden');
-    document.getElementById('booking-modal').classList.add('flex');
+function hideAIRuleModal() {
+    document.getElementById('ai-rule-modal').classList.add('hidden');
 }
 
-function showBookingModalForEquipment(equipmentId, name) {
-    selectedEquipmentId = equipmentId;
-    loadEquipmentOptions().then(() => {
-        document.getElementById('booking-equipment').value = equipmentId;
-    });
-    document.getElementById('booking-modal').classList.remove('hidden');
-    document.getElementById('booking-modal').classList.add('flex');
+function onRuleTypeChange() {
+    const type = document.getElementById('ai-rule-type').value;
+    document.getElementById('parameter-fields').classList.toggle('hidden', type !== 'parameter');
 }
 
-function hideBookingModal() {
-    document.getElementById('booking-modal').classList.add('hidden');
-    document.getElementById('booking-modal').classList.remove('flex');
-    document.getElementById('booking-form').reset();
-}
-
-async function loadEquipmentOptions() {
-    const data = await apiCall('/api/equipment');
-    const select = document.getElementById('booking-equipment');
-    select.innerHTML = '<option value="">Select equipment...</option>' +
-        (data.equipment || []).map(e => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
-}
-
-async function createBooking(event) {
-    event.preventDefault();
-
+async function saveAIRule() {
+    const id = document.getElementById('ai-rule-modal-id').value;
     const body = {
-        equipment_id: parseInt(document.getElementById('booking-equipment').value),
-        start_date: document.getElementById('booking-start-date').value,
-        end_date: document.getElementById('booking-end-date').value,
-        start_time: document.getElementById('booking-start-time').value + ':00',
-        end_time: document.getElementById('booking-end-time').value + ':00',
-        description: document.getElementById('booking-description').value,
+        rule_type: document.getElementById('ai-rule-type').value,
+        parameter_name: document.getElementById('ai-rule-param-name').value || null,
+        parameter_unit: document.getElementById('ai-rule-param-unit').value || null,
+        prompt_text: document.getElementById('ai-rule-prompt').value,
+        is_enabled: document.getElementById('ai-rule-enabled').checked,
     };
 
-    const data = await apiCall('/api/bookings', 'POST', body);
+    const url = id ? `/api/admin/ai-specification-rules/${id}` : '/api/admin/ai-specification-rules';
+    const method = id ? 'PATCH' : 'POST';
 
-    if (data.success) {
-        hideBookingModal();
-        loadBookings();
-        alert('Booking created successfully!');
+    const result = await apiCall(url, method, body);
+    if (result.success || result.rule) {
+        showToast(id ? 'Rule updated' : 'Rule created', 'success');
+        hideAIRuleModal();
+        loadAIRules();
     } else {
-        alert(data.detail?.message || data.detail || 'Failed to create booking');
+        showToast(result.detail || 'Failed to save rule', 'error');
     }
 }
 
-async function cancelBooking(bookingId) {
-    if (!confirm('Are you sure you want to cancel this booking?')) return;
-
-    const data = await apiCall(`/api/bookings/${bookingId}`, 'DELETE');
-    if (data.success) {
-        loadBookings();
-    } else {
-        alert(data.detail || 'Failed to cancel booking');
+// ===============================
+// AI Chat Section (Admin)
+// ===============================
+function handleChatKeydown(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendChatMessage();
     }
 }
 
-// Logout
+async function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    if (!message) return;
+
+    const container = document.getElementById('chat-messages');
+
+    // Add user message
+    container.innerHTML += `<div class="chat-message user">${escapeHtml(message)}</div>`;
+    input.value = '';
+
+    // Add typing indicator
+    container.innerHTML += '<div id="typing-indicator" class="typing-indicator"><span></span><span></span><span></span></div>';
+    container.scrollTop = container.scrollHeight;
+
+    try {
+        const data = await apiCall('/api/ai/chat', 'POST', { message });
+
+        // Remove typing indicator
+        document.getElementById('typing-indicator')?.remove();
+
+        // Add assistant message
+        container.innerHTML += `<div class="chat-message assistant">${escapeHtml(data.response || 'No response')}</div>`;
+        container.scrollTop = container.scrollHeight;
+    } catch (e) {
+        document.getElementById('typing-indicator')?.remove();
+        container.innerHTML += '<div class="chat-message assistant">Sorry, I encountered an error. Please try again.</div>';
+    }
+}
+
+function clearChat() {
+    document.getElementById('chat-messages').innerHTML = `
+        <div class="chat-message assistant">
+            Hello! I'm your AI assistant. I can help you with equipment recommendations, answer questions about specifications, or assist with booking decisions. How can I help you today?
+        </div>
+    `;
+}
+
+// ===============================
+// Auth
+// ===============================
 async function logout() {
     await apiCall('/api/auth/logout', 'POST');
     window.location.href = '/login';
 }
 
-// Utility
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
+// ===============================
 // Initialize
+// ===============================
 document.addEventListener('DOMContentLoaded', () => {
-    showTab('bookings');
+    showSection('information');
 });
 </script>
 {% endblock %}

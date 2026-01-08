@@ -70,9 +70,12 @@ class MagicLink(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     ip_address = Column(String(45), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    # For token reuse within 2 minutes (Chrome mobile prefetch fix)
+    last_auth_token_id = Column(Integer, ForeignKey("auth_tokens.id", ondelete="SET NULL"), nullable=True)
 
     # Relationships
     user = relationship("User", back_populates="magic_links")
+    last_auth_token = relationship("AuthToken", foreign_keys=[last_auth_token_id])
 
     def is_valid(self) -> bool:
         """Check if magic link is still valid."""
@@ -125,6 +128,82 @@ class CronJob(Base):
         return f"<CronJob(id={self.id}, key='{self.job_key}', enabled={self.is_enabled})>"
 
 
+class SystemSettings(Base):
+    """System-wide settings including service mode."""
+
+    __tablename__ = "system_settings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    setting_key = Column(String(100), unique=True, nullable=False, index=True)
+    setting_value = Column(Text, nullable=True)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+    def __repr__(self):
+        return f"<SystemSettings(key='{self.setting_key}', value='{self.setting_value}')>"
+
+
+class RegistrationSettings(Base):
+    """Registration settings for controlling user sign-ups."""
+
+    __tablename__ = "registration_settings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    # Domain-based registration: allow users from specified domains
+    allow_domain_registration = Column(Boolean, nullable=False, default=True)
+    # Email-based registration: allow only specific pre-approved emails
+    allow_email_registration = Column(Boolean, nullable=False, default=False)
+    # Comma-separated list of allowed email domains (e.g., "company.com,partner.org")
+    allowed_domains = Column(Text, nullable=True)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary."""
+        domains = self.allowed_domains.split(",") if self.allowed_domains else []
+        return {
+            "id": self.id,
+            "allow_domain_registration": self.allow_domain_registration,
+            "allow_email_registration": self.allow_email_registration,
+            "allowed_domains": domains,
+            "domain": self.allowed_domains or "",  # For compatibility with rfbooking-core
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def __repr__(self):
+        return f"<RegistrationSettings(domain={self.allow_domain_registration}, email={self.allow_email_registration})>"
+
+
+class AllowedEmail(Base):
+    """Allowed email addresses for restricted registration."""
+
+    __tablename__ = "allowed_emails"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    name = Column(String(255), nullable=True)  # Optional name for the invited user
+    added_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    added_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+    def to_dict(self, registered_user=None) -> dict:
+        """Convert to dictionary.
+
+        Args:
+            registered_user: Optional User object if this email has registered
+        """
+        return {
+            "id": self.id,
+            "email": self.email,
+            "name": self.name,
+            "added_at": self.added_at.isoformat() if self.added_at else None,
+            "status": "registered" if registered_user else "pending",
+            "is_active": registered_user.is_active if registered_user else False,
+        }
+
+    def __repr__(self):
+        return f"<AllowedEmail(email='{self.email}')>"
+
+
 class NotificationLog(Base):
     """Email notification tracking."""
 
@@ -149,3 +228,42 @@ class NotificationLog(Base):
 
     def __repr__(self):
         return f"<NotificationLog(id={self.id}, type='{self.notification_type}', status='{self.status}')>"
+
+
+class AuditLog(Base):
+    """Audit log for tracking admin actions."""
+
+    __tablename__ = "audit_log"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    timestamp = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    user_email = Column(String(255), nullable=True)  # Store email in case user is deleted
+    action = Column(String(100), nullable=False, index=True)  # create, update, delete, login, etc.
+    resource_type = Column(String(100), nullable=False, index=True)  # user, equipment, booking, etc.
+    resource_id = Column(Integer, nullable=True)
+    resource_name = Column(String(255), nullable=True)  # Human-readable identifier
+    details = Column(Text, nullable=True)  # JSON string with change details
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+
+    # Relationships
+    user = relationship("User")
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary."""
+        return {
+            "id": self.id,
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
+            "user_id": self.user_id,
+            "user_email": self.user_email,
+            "action": self.action,
+            "resource_type": self.resource_type,
+            "resource_id": self.resource_id,
+            "resource_name": self.resource_name,
+            "details": self.details,
+            "ip_address": self.ip_address,
+        }
+
+    def __repr__(self):
+        return f"<AuditLog(id={self.id}, action='{self.action}', resource='{self.resource_type}')>"
