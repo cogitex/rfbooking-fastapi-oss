@@ -19,7 +19,7 @@
 from datetime import date
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -371,10 +371,17 @@ async def update_equipment(
 @router.delete("/api/equipment/{equipment_id}")
 async def delete_equipment(
     equipment_id: int,
+    new_status: Optional[int] = Query(None, alias="status"),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    """Soft delete equipment (admin only)."""
+    """Soft delete/deactivate equipment (admin only).
+
+    Use status query parameter to toggle:
+    - status=0: Deactivate equipment
+    - status=1: Activate equipment
+    - No status: Deactivate equipment (default)
+    """
     equipment = db.query(Equipment).filter(Equipment.id == equipment_id).first()
 
     if not equipment:
@@ -383,7 +390,11 @@ async def delete_equipment(
             detail="Equipment not found",
         )
 
-    equipment.is_active = False
+    # Determine status (default is deactivate)
+    is_active = new_status == 1 if new_status is not None else False
+    action = "activated" if is_active else "deactivated"
+
+    equipment.is_active = is_active
     db.commit()
 
     # Invalidate AI equipment cache
@@ -391,7 +402,7 @@ async def delete_equipment(
 
     return {
         "success": True,
-        "message": f"Equipment '{equipment.name}' deactivated",
+        "message": f"Equipment '{equipment.name}' {action}",
     }
 
 

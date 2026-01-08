@@ -1132,6 +1132,14 @@ tbody td {
     margin-top: 4px;
 }
 
+.sidebar-date {
+    color: var(--gray-300);
+    font-size: 0.7rem;
+    margin-top: 8px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
 .sidebar-nav {
     padding: 16px 12px;
 }

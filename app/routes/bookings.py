@@ -22,7 +22,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, validator
 from sqlalchemy import and_, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.config import get_settings
 from app.database import get_db
@@ -119,7 +119,7 @@ async def list_bookings(
     current_user: User = Depends(get_current_user),
 ):
     """List bookings with optional filters."""
-    query = db.query(Booking)
+    query = db.query(Booking).options(joinedload(Booking.user), joinedload(Booking.equipment))
 
     # Apply filters
     if equipment_id:

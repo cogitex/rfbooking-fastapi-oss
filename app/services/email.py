@@ -145,55 +145,51 @@ class EmailService:
             Response from email provider
         """
         verify_url = f"{self.settings.app.base_url}/api/auth/verify?token={token}"
+        org_name = self.settings.organization.name
 
         html = f"""
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .button {{ display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; }}
-        .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }}
-    </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Welcome to {self.settings.app.name}</h2>
-        <p>Hi {name},</p>
-        <p>Click the button below to sign in to your account:</p>
-        <a href="{verify_url}" class="button">Sign In</a>
-        <p>Or copy and paste this link into your browser:</p>
-        <p><a href="{verify_url}">{verify_url}</a></p>
-        <p>This link will expire in {self.settings.security.magic_link_minutes} minutes.</p>
-        <div class="footer">
-            <p>If you didn't request this email, you can safely ignore it.</p>
-            <p>{self.settings.organization.name}</p>
-        </div>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2>Welcome to {org_name}!</h2>
+      <p>Hi {name},</p>
+      <p>Click the link below to log in to your RFBooking account:</p>
+      <p style="margin: 30px 0;">
+        <a href="{verify_url}" style="background-color: #FF6B35; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+          Log In to RFBooking
+        </a>
+      </p>
+      <p>This link will expire in {self.settings.security.magic_link_minutes} minutes.</p>
+      <p>If you didn't request this login link, you can safely ignore this email.</p>
+      <p style="color: #666; font-size: 12px; margin-top: 40px;">
+        This is an automated message from RFBooking System.
+      </p>
     </div>
 </body>
 </html>
 """
 
         text = f"""
-Welcome to {self.settings.app.name}
+Welcome to {org_name}!
 
 Hi {name},
 
-Click the link below to sign in to your account:
+Click the link below to log in to your RFBooking account:
+
 {verify_url}
 
 This link will expire in {self.settings.security.magic_link_minutes} minutes.
 
-If you didn't request this email, you can safely ignore it.
-
-{self.settings.organization.name}
+If you didn't request this login link, you can safely ignore this email.
 """
 
         return await self.send_email(
             to=email,
-            subject=f"Sign in to {self.settings.app.name}",
+            subject=f"Your login link for {org_name} - RFBooking",
             html=html,
             text=text,
         )
@@ -205,32 +201,104 @@ If you didn't request this email, you can safely ignore it.
         booking_data: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Send booking confirmation email."""
+        org_name = self.settings.organization.name
+        equipment_name = booking_data.get('equipment_name', 'N/A')
+        location = booking_data.get('equipment_location', '')
+        description = booking_data.get('description', '')
+        manager_names = booking_data.get('manager_names', '')
+        manager_emails = booking_data.get('manager_emails', '')
+
+        # Build location row if exists
+        location_row = f'''
+              <tr>
+                <td style="padding: 8px 0; color: #6b8278; font-weight: 600;">Location:</td>
+                <td style="padding: 8px 0; color: #2d3e35;">{location}</td>
+              </tr>
+        ''' if location else ''
+
+        # Build manager contact info
+        manager_info = ''
+        if manager_names:
+            names = manager_names.split(', ') if isinstance(manager_names, str) else manager_names
+            emails = manager_emails.split(', ') if isinstance(manager_emails, str) else (manager_emails or [])
+            manager_items = []
+            for idx, mgr_name in enumerate(names):
+                mgr_email = emails[idx] if idx < len(emails) else ''
+                if mgr_email:
+                    manager_items.append(f'<div style="margin: 5px 0;">{mgr_name} - <a href="mailto:{mgr_email}" style="color: #4a7c59;">{mgr_email}</a></div>')
+                else:
+                    manager_items.append(f'<div style="margin: 5px 0;">{mgr_name}</div>')
+            manager_info = ''.join(manager_items)
+        else:
+            manager_info = '<div style="color: #666;">No manager assigned</div>'
+
+        # Build notes section if exists
+        notes_section = f'''
+          <div style="margin: 20px 0;">
+            <h4 style="color: #3d5a4a; margin-bottom: 10px; font-size: 14px;">Notes:</h4>
+            <div style="background-color: #fafbfa; padding: 12px; border-radius: 4px; color: #2d3e35; border: 1px solid #e5ebe7;">
+              {description}
+            </div>
+          </div>
+        ''' if description else ''
+
         html = f"""
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .details {{ background: #f5f5f5; padding: 15px; border-radius: 6px; margin: 20px 0; }}
-        .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }}
+        @media only screen and (max-width: 600px) {{
+          .booking-table tr {{ display: block !important; margin-bottom: 15px !important; }}
+          .booking-table td {{ display: block !important; width: 100% !important; padding: 4px 0 !important; }}
+          .booking-table td:first-child {{ padding-bottom: 2px !important; }}
+        }}
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Booking Confirmed</h2>
-        <p>Hi {name},</p>
-        <p>Your equipment booking has been confirmed:</p>
-        <div class="details">
-            <p><strong>Equipment:</strong> {booking_data.get('equipment_name', 'N/A')}</p>
-            <p><strong>Date:</strong> {booking_data.get('start_date')} to {booking_data.get('end_date')}</p>
-            <p><strong>Time:</strong> {booking_data.get('start_time')} - {booking_data.get('end_time')}</p>
-            <p><strong>Location:</strong> {booking_data.get('equipment_location', 'N/A')}</p>
+    <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; background-color: #f9faf9; padding: 20px;">
+        <div style="background-color: #ffffff; border-radius: 8px; padding: 30px; border-top: 4px solid #5a8a6b;">
+          <h2 style="color: #3d5a4a; margin-top: 0; margin-bottom: 10px;">Booking Confirmed</h2>
+          <p style="color: #6b8278; margin-bottom: 25px;">Your equipment booking has been successfully created.</p>
+
+          <div style="background-color: #f4f8f6; border-left: 3px solid #5a8a6b; padding: 15px; margin: 20px 0;">
+            <h3 style="color: #3d5a4a; margin-top: 0; margin-bottom: 15px; font-size: 16px;">Booking Details</h3>
+
+            <table class="booking-table" style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; color: #6b8278; font-weight: 600; width: 140px;">Equipment:</td>
+                <td style="padding: 8px 0; color: #2d3e35;">{equipment_name}</td>
+              </tr>
+              {location_row}
+              <tr>
+                <td style="padding: 8px 0; color: #6b8278; font-weight: 600;">Start Date:</td>
+                <td style="padding: 8px 0; color: #2d3e35;">{booking_data.get('start_date')} at {booking_data.get('start_time')}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b8278; font-weight: 600;">End Date:</td>
+                <td style="padding: 8px 0; color: #2d3e35;">{booking_data.get('end_date')} at {booking_data.get('end_time')}</td>
+              </tr>
+            </table>
+          </div>
+
+          {notes_section}
+
+          <div style="margin: 20px 0;">
+            <h4 style="color: #3d5a4a; margin-bottom: 10px; font-size: 14px;">Equipment Manager(s):</h4>
+            <div style="color: #2d3e35;">
+              {manager_info}
+            </div>
+          </div>
+
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5ebe7;">
+            <p style="color: #6b8278; font-size: 13px; margin: 0;">
+              You will receive a reminder 24 hours before your booking starts.
+            </p>
+          </div>
         </div>
-        <p>You can view and manage your booking in the dashboard.</p>
-        <div class="footer">
-            <p>{self.settings.organization.name}</p>
+
+        <div style="text-align: center; margin-top: 20px; color: #8a9a91; font-size: 12px;">
+          RFBooking System - {org_name}
         </div>
     </div>
 </body>
@@ -239,7 +307,7 @@ If you didn't request this email, you can safely ignore it.
 
         return await self.send_email(
             to=email,
-            subject=f"Booking Confirmed: {booking_data.get('equipment_name', 'Equipment')}",
+            subject=f"Booking Confirmed - {equipment_name}",
             html=html,
         )
 
@@ -250,32 +318,52 @@ If you didn't request this email, you can safely ignore it.
         booking_data: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Send booking reminder email."""
+        equipment_name = booking_data.get('equipment_name', 'N/A')
+        location = booking_data.get('equipment_location', '')
+        description = booking_data.get('description', '')
+        manager_names = booking_data.get('manager_names', '')
+        manager_emails = booking_data.get('manager_emails', '')
+
+        # Build location row if exists
+        location_row = f'<li><strong>Location:</strong> {location}</li>' if location else ''
+
+        # Build manager contact info
+        manager_info = ''
+        if manager_names:
+            names = manager_names.split(', ') if isinstance(manager_names, str) else manager_names
+            emails = manager_emails.split(', ') if isinstance(manager_emails, str) else (manager_emails or [])
+            manager_info = '<p><strong>Equipment Manager(s):</strong></p><ul>'
+            for idx, mgr_name in enumerate(names):
+                mgr_email = emails[idx] if idx < len(emails) else ''
+                manager_info += f'<li>{mgr_name}{" - " + mgr_email if mgr_email else ""}</li>'
+            manager_info += '</ul>'
+
+        # Build notes section if exists
+        notes_section = f'<p><strong>Notes:</strong> {description}</p>' if description else ''
+
         html = f"""
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .details {{ background: #fff3cd; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #ffc107; }}
-        .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }}
-    </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Booking Reminder</h2>
-        <p>Hi {name},</p>
-        <p>This is a reminder about your upcoming equipment booking:</p>
-        <div class="details">
-            <p><strong>Equipment:</strong> {booking_data.get('equipment_name', 'N/A')}</p>
-            <p><strong>Date:</strong> {booking_data.get('start_date')}</p>
-            <p><strong>Time:</strong> {booking_data.get('start_time')} - {booking_data.get('end_time')}</p>
-            <p><strong>Location:</strong> {booking_data.get('equipment_location', 'N/A')}</p>
-        </div>
-        <div class="footer">
-            <p>{self.settings.organization.name}</p>
-        </div>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2>Booking Reminder</h2>
+      <p>Hi {name},</p>
+      <p>This is a reminder that your booking is coming up:</p>
+      <ul>
+        <li><strong>Equipment:</strong> {equipment_name}</li>
+        <li><strong>Date:</strong> {booking_data.get('start_date')}</li>
+        <li><strong>Time:</strong> {booking_data.get('start_time')} - {booking_data.get('end_time')}</li>
+        {location_row}
+      </ul>
+      {notes_section}
+      {manager_info}
+      <p>See you soon!</p>
+      <p style="color: #666; font-size: 12px; margin-top: 40px;">
+        This is an automated message from RFBooking System.
+      </p>
     </div>
 </body>
 </html>
@@ -283,7 +371,7 @@ If you didn't request this email, you can safely ignore it.
 
         return await self.send_email(
             to=email,
-            subject=f"Reminder: {booking_data.get('equipment_name', 'Equipment')} booking tomorrow",
+            subject=f"Booking Reminder - {equipment_name} on {booking_data.get('start_date')}",
             html=html,
         )
 
@@ -292,32 +380,120 @@ If you didn't request this email, you can safely ignore it.
         email: str,
         name: str,
         booking_data: Dict[str, Any],
+        cancelled_by_manager: bool = False,
+        canceller_name: str = '',
+        canceller_email: str = '',
     ) -> Dict[str, Any]:
         """Send booking cancellation email."""
+        org_name = self.settings.organization.name
+        equipment_name = booking_data.get('equipment_name', 'N/A')
+        location = booking_data.get('equipment_location', '')
+        description = booking_data.get('description', '')
+        manager_names = booking_data.get('manager_names', '')
+        manager_emails = booking_data.get('manager_emails', '')
+
+        # Build location row if exists
+        location_row = f'''
+              <tr>
+                <td style="padding: 8px 0; color: #a66; font-weight: 600;">Location:</td>
+                <td style="padding: 8px 0; color: #3e2d2d;">{location}</td>
+              </tr>
+        ''' if location else ''
+
+        # Build notes row if exists
+        notes_row = f'''
+              <tr>
+                <td style="padding: 8px 0; color: #a66; font-weight: 600; vertical-align: top;">Notes:</td>
+                <td style="padding: 8px 0; color: #3e2d2d;">{description}</td>
+              </tr>
+        ''' if description else ''
+
+        # Build canceller info if cancelled by manager
+        canceller_info = ''
+        if cancelled_by_manager and canceller_name:
+            canceller_info = f'''
+          <div style="background-color: #fff5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 0 0 10px 0; color: #8b3a3a; font-weight: 600;">Cancelled By:</p>
+            <div style="margin: 5px 0;">{canceller_name}{' - <a href="mailto:' + canceller_email + '" style="color: #c45454;">' + canceller_email + '</a>' if canceller_email else ''}</div>
+          </div>
+            '''
+            subtitle = 'Your equipment booking has been cancelled by a manager.'
+        else:
+            subtitle = 'Your booking has been successfully cancelled.'
+
+        # Build manager contact info for user cancellation confirmation
+        manager_info = ''
+        if not cancelled_by_manager and manager_names:
+            names = manager_names.split(', ') if isinstance(manager_names, str) else manager_names
+            emails_list = manager_emails.split(', ') if isinstance(manager_emails, str) else (manager_emails or [])
+            manager_items = []
+            for idx, mgr_name in enumerate(names):
+                mgr_email = emails_list[idx] if idx < len(emails_list) else ''
+                if mgr_email:
+                    manager_items.append(f'<div style="margin: 5px 0;">{mgr_name} - <a href="mailto:{mgr_email}" style="color: #c45454;">{mgr_email}</a></div>')
+                else:
+                    manager_items.append(f'<div style="margin: 5px 0;">{mgr_name}</div>')
+            manager_info = f'''
+          <div style="background-color: #f4f8f6; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 0 0 10px 0; color: #3d5a4a; font-weight: 600;">Equipment Managers:</p>
+            {''.join(manager_items)}
+          </div>
+            '''
+
         html = f"""
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .details {{ background: #f8d7da; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #dc3545; }}
-        .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }}
+        @media only screen and (max-width: 600px) {{
+          .booking-table tr {{ display: block !important; margin-bottom: 15px !important; }}
+          .booking-table td {{ display: block !important; width: 100% !important; padding: 4px 0 !important; }}
+          .booking-table td:first-child {{ padding-bottom: 2px !important; }}
+        }}
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Booking Cancelled</h2>
-        <p>Hi {name},</p>
-        <p>Your equipment booking has been cancelled:</p>
-        <div class="details">
-            <p><strong>Equipment:</strong> {booking_data.get('equipment_name', 'N/A')}</p>
-            <p><strong>Date:</strong> {booking_data.get('start_date')} to {booking_data.get('end_date')}</p>
-            <p><strong>Time:</strong> {booking_data.get('start_time')} - {booking_data.get('end_time')}</p>
+    <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; background-color: #faf9f9; padding: 20px;">
+        <div style="background-color: #ffffff; border-radius: 8px; padding: 30px; border-top: 4px solid #c45454;">
+          <h2 style="color: #8b3a3a; margin-top: 0; margin-bottom: 10px;">Booking Cancelled</h2>
+          <p style="color: #a66; margin-bottom: 25px;">{subtitle}</p>
+
+          <div style="background-color: #fff5f5; border-left: 3px solid #c45454; padding: 15px; margin: 20px 0;">
+            <h3 style="color: #8b3a3a; margin-top: 0; margin-bottom: 15px; font-size: 16px;">Cancelled Booking Details</h3>
+
+            <table class="booking-table" style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; color: #a66; font-weight: 600; width: 140px;">Equipment:</td>
+                <td style="padding: 8px 0; color: #3e2d2d;">{equipment_name}</td>
+              </tr>
+              {location_row}
+              <tr>
+                <td style="padding: 8px 0; color: #a66; font-weight: 600;">Start Date:</td>
+                <td style="padding: 8px 0; color: #3e2d2d;">{booking_data.get('start_date')}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #a66; font-weight: 600;">End Date:</td>
+                <td style="padding: 8px 0; color: #3e2d2d;">{booking_data.get('end_date')}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #a66; font-weight: 600;">Time:</td>
+                <td style="padding: 8px 0; color: #3e2d2d;">{booking_data.get('start_time')} - {booking_data.get('end_time')}</td>
+              </tr>
+              {notes_row}
+            </table>
+          </div>
+
+          {canceller_info}
+          {manager_info}
+
+          <p style="color: #666; font-size: 14px; margin: 20px 0 0 0;">
+            {'If you have any questions about this cancellation, please contact the manager listed above or your administrator.' if cancelled_by_manager else 'The equipment is now available for rebooking during this time slot. If you need to make a new booking, please visit the dashboard.'}
+          </p>
         </div>
-        <div class="footer">
-            <p>{self.settings.organization.name}</p>
+
+        <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
+          <p>This is an automated message from RFBooking System</p>
         </div>
     </div>
 </body>
@@ -326,7 +502,7 @@ If you didn't request this email, you can safely ignore it.
 
         return await self.send_email(
             to=email,
-            subject=f"Booking Cancelled: {booking_data.get('equipment_name', 'Equipment')}",
+            subject=f"Booking Cancelled - {equipment_name}",
             html=html,
         )
 
@@ -336,36 +512,95 @@ If you didn't request this email, you can safely ignore it.
         name: str,
         booking_data: Dict[str, Any],
         booker_name: str,
+        booker_email: str = '',
     ) -> Dict[str, Any]:
         """Send notification to manager about new booking."""
+        org_name = self.settings.organization.name
+        equipment_name = booking_data.get('equipment_name', 'N/A')
+        location = booking_data.get('equipment_location', '')
+        description = booking_data.get('description', '')
+
+        # Build location row if exists
+        location_row = f'''
+              <tr>
+                <td style="padding: 8px 0; color: #6b8278; font-weight: 600;">Location:</td>
+                <td style="padding: 8px 0; color: #2d3e35;">{location}</td>
+              </tr>
+        ''' if location else ''
+
+        # Build notes section if exists
+        notes_section = f'''
+          <div style="margin: 20px 0;">
+            <h4 style="color: #3d5a4a; margin-bottom: 10px; font-size: 14px;">Notes:</h4>
+            <div style="background-color: #fafbfa; padding: 12px; border-radius: 4px; color: #2d3e35; border: 1px solid #e5ebe7;">
+              {description}
+            </div>
+          </div>
+        ''' if description else ''
+
+        # Build booker info
+        booker_info = f'{booker_name}'
+        if booker_email:
+            booker_info = f'{booker_name} (<a href="mailto:{booker_email}" style="color: #4a7c59;">{booker_email}</a>)'
+
         html = f"""
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .details {{ background: #e8f4fd; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #2563eb; }}
-        .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }}
+        @media only screen and (max-width: 600px) {{
+          .booking-table tr {{ display: block !important; margin-bottom: 15px !important; }}
+          .booking-table td {{ display: block !important; width: 100% !important; padding: 4px 0 !important; }}
+          .booking-table td:first-child {{ padding-bottom: 2px !important; }}
+        }}
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>New Booking Created</h2>
-        <p>Hi {name},</p>
-        <p>A new booking has been created for equipment you manage:</p>
-        <div class="details">
-            <p><strong>Equipment:</strong> {booking_data.get('equipment_name', 'N/A')}</p>
-            <p><strong>Booked by:</strong> {booker_name}</p>
-            <p><strong>Date:</strong> {booking_data.get('start_date')} to {booking_data.get('end_date')}</p>
-            <p><strong>Time:</strong> {booking_data.get('start_time')} - {booking_data.get('end_time')}</p>
-            <p><strong>Location:</strong> {booking_data.get('equipment_location', 'N/A')}</p>
-            {f"<p><strong>Description:</strong> {booking_data.get('description')}</p>" if booking_data.get('description') else ""}
+    <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; background-color: #f9faf9; padding: 20px;">
+        <div style="background-color: #ffffff; border-radius: 8px; padding: 30px; border-top: 4px solid #5a8a6b;">
+          <h2 style="color: #3d5a4a; margin-top: 0; margin-bottom: 10px;">New Booking Created</h2>
+          <p style="color: #6b8278; margin-bottom: 25px;">A new booking has been made for equipment you manage.</p>
+
+          <div style="background-color: #f4f8f6; border-left: 3px solid #5a8a6b; padding: 15px; margin: 20px 0;">
+            <h3 style="color: #3d5a4a; margin-top: 0; margin-bottom: 15px; font-size: 16px;">Booking Details</h3>
+
+            <table class="booking-table" style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; color: #6b8278; font-weight: 600; width: 140px;">Equipment:</td>
+                <td style="padding: 8px 0; color: #2d3e35;">{equipment_name}</td>
+              </tr>
+              {location_row}
+              <tr>
+                <td style="padding: 8px 0; color: #6b8278; font-weight: 600;">Start Date:</td>
+                <td style="padding: 8px 0; color: #2d3e35;">{booking_data.get('start_date')} at {booking_data.get('start_time')}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b8278; font-weight: 600;">End Date:</td>
+                <td style="padding: 8px 0; color: #2d3e35;">{booking_data.get('end_date')} at {booking_data.get('end_time')}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b8278; font-weight: 600;">Booked By:</td>
+                <td style="padding: 8px 0; color: #2d3e35;">{booker_info}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b8278; font-weight: 600;">Manager:</td>
+                <td style="padding: 8px 0; color: #2d3e35;">{name} (<a href="mailto:{email}" style="color: #4a7c59;">{email}</a>)</td>
+              </tr>
+            </table>
+          </div>
+
+          {notes_section}
+
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5ebe7;">
+            <p style="color: #6b8278; font-size: 13px; margin: 0;">
+              You will receive a reminder 24 hours before this booking starts.
+            </p>
+          </div>
         </div>
-        <p>You can view and manage this booking in the dashboard.</p>
-        <div class="footer">
-            <p>{self.settings.organization.name}</p>
+
+        <div style="text-align: center; margin-top: 20px; color: #8a9a91; font-size: 12px;">
+          RFBooking System - {org_name}
         </div>
     </div>
 </body>
@@ -374,7 +609,7 @@ If you didn't request this email, you can safely ignore it.
 
         return await self.send_email(
             to=email,
-            subject=f"New Booking: {booking_data.get('equipment_name', 'Equipment')} by {booker_name}",
+            subject=f"New Booking - {equipment_name}",
             html=html,
         )
 
@@ -384,41 +619,46 @@ If you didn't request this email, you can safely ignore it.
         name: str,
         booking_data: Dict[str, Any],
         booker_name: str,
+        booker_email: str = '',
     ) -> Dict[str, Any]:
         """Send alert to manager about short-notice cancellation."""
         settings = get_settings()
+        equipment_name = booking_data.get('equipment_name', 'N/A')
+        location = booking_data.get('equipment_location', '')
+        description = booking_data.get('description', '')
+
+        # Build location row if exists
+        location_row = f'<li><strong>Location:</strong> {location}</li>' if location else ''
+
+        # Build user info
+        user_info = booker_name
+        if booker_email:
+            user_info = f'{booker_name} ({booker_email})'
+
         html = f"""
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .alert {{ background: #fef3cd; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #ffc107; }}
-        .details {{ background: #f8d7da; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #dc3545; }}
-        .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }}
-    </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Short-Notice Cancellation Alert</h2>
-        <p>Hi {name},</p>
-        <div class="alert">
-            <p><strong>Alert:</strong> A booking was cancelled with less than {settings.booking.short_notice_days} days notice.</p>
-        </div>
-        <p>The following booking has been cancelled:</p>
-        <div class="details">
-            <p><strong>Equipment:</strong> {booking_data.get('equipment_name', 'N/A')}</p>
-            <p><strong>Originally booked by:</strong> {booker_name}</p>
-            <p><strong>Date:</strong> {booking_data.get('start_date')} to {booking_data.get('end_date')}</p>
-            <p><strong>Time:</strong> {booking_data.get('start_time')} - {booking_data.get('end_time')}</p>
-            <p><strong>Location:</strong> {booking_data.get('equipment_location', 'N/A')}</p>
-        </div>
-        <p>This time slot is now available for other users to book.</p>
-        <div class="footer">
-            <p>{self.settings.organization.name}</p>
-        </div>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2>Booking Cancelled by User</h2>
+      <p>Hi {name},</p>
+      <p>{booker_name} has cancelled their booking for equipment you manage:</p>
+      <ul>
+        <li><strong>Equipment:</strong> {equipment_name}</li>
+        <li><strong>User:</strong> {user_info}</li>
+        <li><strong>Date:</strong> {booking_data.get('start_date')} to {booking_data.get('end_date')}</li>
+        <li><strong>Time:</strong> {booking_data.get('start_time')} - {booking_data.get('end_time')}</li>
+        {location_row}
+      </ul>
+      {f'<p><strong>Original Notes:</strong> {description}</p>' if description else ''}
+      <p><strong>Note:</strong> This booking was cancelled within {settings.booking.short_notice_days} days of the scheduled start date.</p>
+      <p>The equipment is now available for rebooking during this time slot.</p>
+      <p style="color: #666; font-size: 12px; margin-top: 40px;">
+        This is an automated message from RFBooking System.
+      </p>
     </div>
 </body>
 </html>
@@ -426,7 +666,7 @@ If you didn't request this email, you can safely ignore it.
 
         return await self.send_email(
             to=email,
-            subject=f"[ALERT] Short-Notice Cancellation: {booking_data.get('equipment_name', 'Equipment')}",
+            subject=f"User Cancelled Booking - {equipment_name} on {booking_data.get('start_date')}",
             html=html,
         )
 
@@ -437,32 +677,38 @@ If you didn't request this email, you can safely ignore it.
         equipment_data: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Send calibration reminder to equipment manager."""
+        equipment_name = equipment_data.get('name', 'N/A')
+        location = equipment_data.get('location', '')
+        calibration_date = equipment_data.get('next_calibration_date', 'N/A')
+
+        # Calculate days until calibration
+        days_remaining = equipment_data.get('days_remaining', '')
+        days_info = f'<li><strong>Days Remaining:</strong> {days_remaining} days</li>' if days_remaining else ''
+
+        # Build location row if exists
+        location_row = f'<li><strong>Location:</strong> {location}</li>' if location else ''
+
         html = f"""
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .details {{ background: #fff3cd; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #ffc107; }}
-        .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }}
-    </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Calibration Reminder</h2>
-        <p>Hi {name},</p>
-        <p>Equipment you manage is due for calibration:</p>
-        <div class="details">
-            <p><strong>Equipment:</strong> {equipment_data.get('name', 'N/A')}</p>
-            <p><strong>Location:</strong> {equipment_data.get('location', 'N/A')}</p>
-            <p><strong>Calibration Due:</strong> {equipment_data.get('next_calibration_date', 'N/A')}</p>
-        </div>
-        <p>Please schedule the calibration to ensure continued equipment accuracy.</p>
-        <div class="footer">
-            <p>{self.settings.organization.name}</p>
-        </div>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2>Equipment Calibration Reminder</h2>
+      <p>Hi {name},</p>
+      <p>A piece of equipment you manage needs calibration soon:</p>
+      <ul>
+        <li><strong>Equipment:</strong> {equipment_name}</li>
+        <li><strong>Calibration Date:</strong> {calibration_date}</li>
+        {days_info}
+        {location_row}
+      </ul>
+      <p>Please schedule the calibration in advance to avoid service interruptions.</p>
+      <p style="color: #666; font-size: 12px; margin-top: 40px;">
+        This is an automated message from RFBooking System.
+      </p>
     </div>
 </body>
 </html>
@@ -470,7 +716,7 @@ If you didn't request this email, you can safely ignore it.
 
         return await self.send_email(
             to=email,
-            subject=f"Calibration Due: {equipment_data.get('name', 'Equipment')}",
+            subject=f"Calibration Reminder - {equipment_name}",
             html=html,
         )
 
@@ -483,6 +729,8 @@ If you didn't request this email, you can safely ignore it.
         week_end: str,
     ) -> Dict[str, Any]:
         """Send weekly report to equipment manager with upcoming bookings."""
+        org_name = self.settings.organization.name
+
         # Build equipment sections
         equipment_sections = ""
         total_bookings = 0
@@ -503,7 +751,7 @@ If you didn't request this email, you can safely ignore it.
                     """
                 equipment_sections += f"""
                 <div style="margin-bottom: 25px;">
-                    <h3 style="color: #2563eb; margin-bottom: 10px;">{eq_name}</h3>
+                    <h3 style="color: #FF6B35; margin-bottom: 10px;">{eq_name}</h3>
                     <p style="color: #666; font-size: 14px; margin-bottom: 10px;">Location: {data.get('location', 'N/A')}</p>
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
@@ -522,7 +770,7 @@ If you didn't request this email, you can safely ignore it.
             else:
                 equipment_sections += f"""
                 <div style="margin-bottom: 25px;">
-                    <h3 style="color: #2563eb; margin-bottom: 10px;">{eq_name}</h3>
+                    <h3 style="color: #FF6B35; margin-bottom: 10px;">{eq_name}</h3>
                     <p style="color: #666; font-size: 14px; margin-bottom: 10px;">Location: {data.get('location', 'N/A')}</p>
                     <p style="color: #888; font-style: italic;">No bookings scheduled for this period.</p>
                 </div>
@@ -536,26 +784,18 @@ If you didn't request this email, you can safely ignore it.
 <html>
 <head>
     <meta charset="utf-8">
-    <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 700px; margin: 0 auto; padding: 20px; }}
-        .header {{ background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; }}
-        .summary {{ background: #f8fafc; padding: 15px; margin-bottom: 20px; border-radius: 6px; }}
-        .content {{ padding: 20px; }}
-        .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }}
-    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
+    <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #FF6B35 0%, #e55a28 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
             <h2 style="margin: 0;">Weekly Equipment Report</h2>
             <p style="margin: 5px 0 0 0; opacity: 0.9;">{week_start} - {week_end}</p>
         </div>
-        <div class="content">
+        <div style="padding: 20px; background: #fff;">
             <p>Hi {name},</p>
             <p>Here's your weekly summary of upcoming equipment bookings:</p>
 
-            <div class="summary">
+            <div style="background: #f8fafc; padding: 15px; margin-bottom: 20px; border-radius: 6px;">
                 <strong>Summary:</strong> {total_bookings} booking(s) across {len(equipment_bookings)} equipment item(s)
             </div>
 
@@ -563,8 +803,8 @@ If you didn't request this email, you can safely ignore it.
 
             <p>You can view and manage all bookings in the dashboard.</p>
         </div>
-        <div class="footer">
-            <p>{self.settings.organization.name}</p>
+        <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
+            <p>RFBooking System - {org_name}</p>
         </div>
     </div>
 </body>

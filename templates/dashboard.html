@@ -12,6 +12,7 @@
         <div class="sidebar-header">
             <div class="sidebar-title">{{ app_name }}</div>
             <div class="sidebar-subtitle">{{ organization_name }}</div>
+            <div id="sidebar-date" class="sidebar-date"></div>
         </div>
 
         <nav class="sidebar-nav">
@@ -238,35 +239,8 @@
                     <!-- Calendar for Date Selection -->
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Select Dates</label>
-                        <div id="booking-calendar" class="border border-gray-200 rounded-lg overflow-hidden">
-                            <div class="calendar-header-nav">
-                                <button type="button" onclick="bookingCalendarPrev()" class="calendar-nav-btn">&larr; Prev</button>
-                                <span id="booking-calendar-title" class="calendar-title">January 2026</span>
-                                <button type="button" onclick="bookingCalendarNext()" class="calendar-nav-btn">Next &rarr;</button>
-                            </div>
-                            <!-- Date Range Display -->
-                            <div class="text-center py-2 border-b border-gray-200">
-                                <span id="selected-date-range" class="text-lg font-bold text-gray-900">Choose dates</span>
-                            </div>
-                            <!-- Calendar Grid with 8 columns: KW + Mon-Sun -->
-                            <div class="grid grid-cols-8 gap-0">
-                                <div class="border-b border-gray-200 text-center py-2 font-semibold text-sm text-orange-700" style="background-color: #fef3c7;">KW</div>
-                                <div class="bg-gray-100 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Mo</div>
-                                <div class="bg-gray-100 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Tu</div>
-                                <div class="bg-gray-100 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">We</div>
-                                <div class="bg-gray-100 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Th</div>
-                                <div class="bg-gray-100 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Fr</div>
-                                <div class="bg-yellow-50 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Sa</div>
-                                <div class="bg-yellow-50 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Su</div>
-                            </div>
-                            <div id="booking-calendar-days" class="grid grid-cols-8 gap-0"></div>
-                        </div>
-                        <!-- Legend -->
-                        <div class="mt-3 flex flex-wrap gap-4 text-xs text-gray-600">
-                            <span class="flex items-center gap-2"><span class="w-4 h-4 bg-green-600 rounded"></span>Selected Range</span>
-                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded border border-gray-300" style="background-color: #F0E68C;"></span>Partially Available (&lt;5h)</span>
-                            <span class="flex items-center gap-2"><span class="w-4 h-4 rounded border border-gray-300" style="background-color: #ffb96e;"></span>Fully Booked</span>
-                            <span class="flex items-center gap-2"><span class="w-4 h-4 bg-yellow-50 rounded border border-yellow-200"></span>Weekend</span>
+                        <div id="booking-calendar-container">
+                            <p class="text-gray-500 text-center py-8">Select equipment to view calendar</p>
                         </div>
                     </div>
 
@@ -763,41 +737,91 @@
         <div id="section-equipment-management" class="section-content hidden">
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Equipment Management</h2>
 
-            <!-- Equipment Types -->
-            <div class="card mb-6">
-                <div class="card-header">
-                    <span>Equipment Types</span>
-                    <button onclick="showTypeModal()" class="btn-primary text-sm">Add Type</button>
-                </div>
-                <div class="card-body">
-                    <div id="types-list" class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div class="text-gray-500">Loading...</div>
+            <!-- AI-Friendly Description Guidelines -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <h3 class="text-sm font-semibold text-blue-800 mb-2">Writing AI-Friendly Descriptions</h3>
+                        <div class="text-sm text-blue-700 space-y-2">
+                            <p class="font-medium">Equipment descriptions help the AI Assistant understand your equipment and make accurate recommendations. Follow these guidelines:</p>
+
+                            <p class="font-bold text-red-600 mt-2">Keep descriptions concise but informative</p>
+
+                            <div class="mt-3">
+                                <p class="font-semibold">For Equipment Types:</p>
+                                <ul class="list-disc ml-5 mt-1 space-y-1">
+                                    <li>Describe what the equipment type is used for (purpose and applications)</li>
+                                    <li>Example: "Systems for measuring RF device characteristics under various load conditions"</li>
+                                </ul>
+                            </div>
+
+                            <div class="mt-3">
+                                <p class="font-semibold">For Equipment Items:</p>
+                                <ul class="list-disc ml-5 mt-1 space-y-1">
+                                    <li>Include key specifications with units and ranges (e.g., "System RF Bandwidth (f0, GHz): 0.6 – 4.0")</li>
+                                    <li>Use consistent format: "Parameter Name (unit): min – max" or "Parameter: value"</li>
+                                    <li>Include capabilities and features (e.g., "2nd harmonic tuning capability")</li>
+                                    <li>Mention power handling, frequency ranges, or other technical constraints</li>
+                                </ul>
+                            </div>
+
+                            <div class="mt-3 p-2 bg-white rounded border border-blue-200">
+                                <p class="font-semibold text-blue-900">Good Example:</p>
+                                <p class="text-xs mt-1">"Load-Pull 3 Hybrid System with Load 2nd harmonic tuning capability<br>Power Handling CW/Pulsed (W): 100/1000<br>System RF Bandwidth (f0, GHz): 0.84 – 4.0"</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Equipment Inventory -->
-            <div class="card">
+            <div class="card card-equipment mb-6">
                 <div class="card-header">
-                    <span>Equipment Inventory</span>
+                    <div>
+                        <h3 class="text-lg font-bold">Equipment Inventory</h3>
+                        <p class="text-sm text-gray-600">Manage all equipment in your organization</p>
+                    </div>
                     <button onclick="showEquipmentModal()" class="btn-primary text-sm">Add Equipment</button>
                 </div>
                 <div class="card-body p-0">
-                    <table class="w-full">
-                        <thead>
-                            <tr>
-                                <th class="text-left">Name</th>
-                                <th class="text-left">Location</th>
-                                <th class="text-left">Type</th>
-                                <th class="text-center">Managers</th>
-                                <th class="text-center">Status</th>
-                                <th class="text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="equipment-table-body">
-                            <tr><td colspan="6" class="text-center text-gray-500 py-4">Loading...</td></tr>
-                        </tbody>
-                    </table>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50 border-b-2 border-brand-200">
+                                <tr>
+                                    <th class="py-3 px-4 text-left font-semibold text-gray-700">Name</th>
+                                    <th class="py-3 px-4 text-left font-semibold text-gray-700">Location</th>
+                                    <th class="py-3 px-4 text-left font-semibold text-gray-700">Type</th>
+                                    <th class="py-3 px-4 text-center font-semibold text-gray-700">Managers</th>
+                                    <th class="py-3 px-4 text-center font-semibold text-gray-700">Status</th>
+                                    <th class="py-3 px-4 text-right font-semibold text-gray-700">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="equipment-table-body" class="divide-y divide-gray-100">
+                                <tr><td colspan="6" class="text-center text-gray-500 py-8">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Equipment Types -->
+            <div class="card card-equipment">
+                <div class="card-header">
+                    <div>
+                        <h3 class="text-lg font-bold">Equipment Types</h3>
+                        <p class="text-sm text-gray-600">Categorize your equipment for better organization</p>
+                    </div>
+                    <button onclick="showTypeModal()" class="btn-secondary text-sm">Add Type</button>
+                </div>
+                <div class="card-body">
+                    <div id="types-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="text-gray-500">Loading...</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1202,9 +1226,11 @@ async function toggleEmailNotifications() {
 // ===============================
 // New Booking Section
 // ===============================
-let bookingCalendarDate = new Date();
+let currentCalendarMonth = new Date();
+currentCalendarMonth.setDate(1); // Always use 1st to avoid month overflow bugs
 let selectedStartDate = null;
 let selectedEndDate = null;
+let allBookingsForEquipment = []; // Bookings for selected equipment
 
 async function loadNewBookingSection() {
     // Load equipment
@@ -1221,7 +1247,88 @@ async function loadNewBookingSection() {
         allEquipmentTypes.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
 
     renderEquipmentGrid();
-    renderBookingCalendar();
+    // Calendar will be rendered when equipment is selected
+}
+
+// Load bookings for selected equipment
+async function loadBookingsForEquipment(equipmentId) {
+    if (!equipmentId) {
+        allBookingsForEquipment = [];
+        return;
+    }
+    const data = await apiCall(`/api/bookings?equipment_id=${equipmentId}`);
+    allBookingsForEquipment = (data.bookings || []).filter(b => b.status === 'active');
+}
+
+// Generate consistent color for each user (orange spectrum)
+function getUserBookingColor(userId) {
+    const colorPalette = [
+        '#ffb96e', '#ffaa5a', '#ffc885', '#ff9f4a',
+        '#ffd199', '#ff8c3a', '#ffe0ad', '#ff7a2a',
+        '#ffb380', '#ffa060', '#ffc470', '#ff9550',
+    ];
+    if (!userId) return colorPalette[0];
+    let hash = 0;
+    const idStr = String(userId);
+    for (let i = 0; i < idStr.length; i++) {
+        hash = ((hash << 5) - hash) + idStr.charCodeAt(i);
+        hash = hash & hash;
+    }
+    return colorPalette[Math.abs(hash) % colorPalette.length];
+}
+
+// Parse time string (HH:MM) to milliseconds since midnight
+function parseTime(timeStr) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return (hours * 60 + minutes) * 60 * 1000;
+}
+
+// Calculate booking duration in hours for a specific date
+function getBookingDurationForDate(booking, dateStr) {
+    const WORK_DAY_START = '08:00';
+    const WORK_DAY_END = '18:00';
+
+    const isSingleDay = booking.start_date === booking.end_date;
+    const isFirstDay = dateStr === booking.start_date;
+    const isLastDay = dateStr === booking.end_date;
+
+    if (isSingleDay) {
+        const start = parseTime(booking.start_time);
+        const end = parseTime(booking.end_time);
+        return (end - start) / (1000 * 60 * 60);
+    }
+
+    if (!isFirstDay && !isLastDay) {
+        // Middle day - full work day
+        return (parseTime(WORK_DAY_END) - parseTime(WORK_DAY_START)) / (1000 * 60 * 60);
+    }
+
+    if (isFirstDay && !isLastDay) {
+        const start = parseTime(booking.start_time);
+        const endOfWorkDay = parseTime(WORK_DAY_END);
+        if (start >= endOfWorkDay) return 0;
+        const effectiveStart = Math.max(start, parseTime(WORK_DAY_START));
+        return (endOfWorkDay - effectiveStart) / (1000 * 60 * 60);
+    }
+
+    if (isLastDay && !isFirstDay) {
+        const startOfWorkDay = parseTime(WORK_DAY_START);
+        const end = parseTime(booking.end_time);
+        if (end <= startOfWorkDay) return 0;
+        const effectiveEnd = Math.min(end, parseTime(WORK_DAY_END));
+        return (effectiveEnd - startOfWorkDay) / (1000 * 60 * 60);
+    }
+
+    return 0;
+}
+
+// Get ISO week number
+function getWeekNumber(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 }
 
 function renderEquipmentGrid() {
@@ -1260,13 +1367,21 @@ function filterEquipment() {
     renderEquipmentGrid();
 }
 
-function selectEquipmentForBooking(id, name, type, location) {
+async function selectEquipmentForBooking(id, name, type, location) {
     selectedEquipmentForBooking = id;
 
     // Update UI
     document.getElementById('selected-equipment-display').classList.remove('hidden');
     document.getElementById('selected-equipment-name').textContent = name;
     document.getElementById('selected-equipment-info').textContent = [type, location].filter(Boolean).join(' • ') || 'No additional info';
+
+    // Reset date selection when changing equipment
+    selectedStartDate = null;
+    selectedEndDate = null;
+
+    // Load bookings for this equipment and rebuild calendar
+    await loadBookingsForEquipment(id);
+    buildCalendar();
 
     updateBookButton();
     renderEquipmentGrid();
@@ -1281,122 +1396,331 @@ function updateBookButton() {
     }
 }
 
-// Calendar Functions
-function getWeekNumber(date) {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-}
+// Build calendar with bookings display
+function buildCalendar() {
+    const container = document.getElementById('booking-calendar-container');
+    if (!selectedEquipmentForBooking) {
+        container.innerHTML = '<p class="text-gray-500 text-center py-8">Select equipment to view calendar</p>';
+        return;
+    }
 
-function renderBookingCalendar() {
-    const container = document.getElementById('booking-calendar-days');
-    const titleEl = document.getElementById('booking-calendar-title');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    const year = bookingCalendarDate.getFullYear();
-    const month = bookingCalendarDate.getMonth();
+    const firstDay = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth(), 1);
+    const firstDayOfWeek = firstDay.getDay();
+    const mondayOffset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+    const calendarStart = new Date(firstDay);
+    calendarStart.setDate(calendarStart.getDate() - mondayOffset);
 
-    titleEl.textContent = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const monthYear = currentCalendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-    // Find the Monday of the week containing the 1st of the month
-    const firstOfMonth = new Date(year, month, 1);
-    const dayOfWeek = firstOfMonth.getDay();
-    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday = 0
-    const calendarStart = new Date(firstOfMonth);
-    calendarStart.setDate(calendarStart.getDate() - daysToSubtract);
+    let html = `
+        <div class="space-y-4">
+            <!-- Month Selector -->
+            <div class="flex justify-center items-center gap-4 mb-4">
+                <button type="button" class="btn-secondary px-4 py-2" onclick="previousMonth()">← Previous</button>
+                <h4 class="font-semibold text-lg">${monthYear}</h4>
+                <button type="button" class="btn-secondary px-4 py-2" onclick="nextMonth()">Next →</button>
+            </div>
 
-    const today = new Date().toISOString().split('T')[0];
-    let html = '';
+            <!-- Date Range Display -->
+            <div class="text-center">
+                <span class="text-lg font-bold text-gray-900" id="dateRange">Choose dates</span>
+            </div>
+
+            <!-- Calendar Grid -->
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <div class="grid grid-cols-8 gap-0">
+                    <!-- Week Number Header -->
+                    <div class="border-b border-gray-200 text-center py-2 font-semibold text-sm text-brand-700" style="background-color: #d9edff;">KW</div>
+                    <!-- Weekday Headers -->
+                    <div class="bg-gray-100 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Mo</div>
+                    <div class="bg-gray-100 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Tu</div>
+                    <div class="bg-gray-100 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">We</div>
+                    <div class="bg-gray-100 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Th</div>
+                    <div class="bg-gray-100 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Fr</div>
+                    <div class="bg-yellow-50 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Sa</div>
+                    <div class="bg-yellow-50 border-b border-gray-200 text-center py-2 font-semibold text-sm text-gray-700">Su</div>
+    `;
 
     // Generate 6 weeks
     let currentDate = new Date(calendarStart);
     for (let week = 0; week < 6; week++) {
         // Week number cell
-        const weekNumber = getWeekNumber(currentDate);
-        html += `<div class="border border-gray-200 p-2 min-h-12 flex items-center justify-center" style="background-color: #fef3c7;">
-            <span class="font-semibold text-sm text-orange-700">${weekNumber}</span>
-        </div>`;
+        const weekStartDate = new Date(currentDate);
+        const weekNumber = getWeekNumber(weekStartDate);
+        const year = weekStartDate.getFullYear();
+        const month = String(weekStartDate.getMonth() + 1).padStart(2, '0');
+        const day = String(weekStartDate.getDate()).padStart(2, '0');
+        const weekStartDateStr = `${year}-${month}-${day}`;
 
-        // 7 days (Mon-Sun)
-        for (let day = 0; day < 7; day++) {
+        html += `
+            <div class="border border-gray-200 p-2 min-h-16 flex items-center justify-center" style="background-color: #e8effa;">
+                <button type="button" class="font-semibold text-sm text-brand-700 hover:text-brand-900 cursor-pointer"
+                    onclick="selectWeek('${weekStartDateStr}')"
+                    title="Click to select working days (Mon-Fri) of week ${weekNumber}">
+                    ${weekNumber}
+                </button>
+            </div>
+        `;
+
+        for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
             const dateYear = currentDate.getFullYear();
             const dateMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
-            const dateDay = String(currentDate.getDate()).padStart(2, '0');
-            const dateStr = `${dateYear}-${dateMonth}-${dateDay}`;
+            const dayOfMonth = String(currentDate.getDate()).padStart(2, '0');
+            const dateStr = `${dateYear}-${dateMonth}-${dayOfMonth}`;
+            const isCurrentMonth = currentDate.getMonth() === currentCalendarMonth.getMonth();
+            const isWeekend = dayIdx === 5 || dayIdx === 6;
+            const isPast = currentDate < today;
 
-            const isCurrentMonth = currentDate.getMonth() === month;
-            const isWeekend = day === 5 || day === 6; // Saturday or Sunday
-            const isToday = dateStr === today;
-            const isSelected = dateStr === selectedStartDate || dateStr === selectedEndDate;
-            const isInRange = selectedStartDate && selectedEndDate && dateStr > selectedStartDate && dateStr < selectedEndDate;
+            // Check for bookings on this date
+            const bookings = allBookingsForEquipment.filter(b =>
+                dateStr >= b.start_date && dateStr <= b.end_date
+            );
+            const isBooked = bookings.length > 0;
 
-            let bgColor = isWeekend ? '#fefce8' : 'white';
-            let textColor = isCurrentMonth ? '#374151' : '#9ca3af';
+            // Check for partial availability
+            let isPartiallyAvailable = false;
+            let partialBookingTime = '';
 
-            if (isSelected) {
-                bgColor = '#16a34a';
-                textColor = 'white';
-            } else if (isInRange) {
-                bgColor = '#bbf7d0';
+            if (bookings.length > 0) {
+                let totalHours = 0;
+                let allBookingsArePartial = true;
+
+                for (const booking of bookings) {
+                    const duration = getBookingDurationForDate(booking, dateStr);
+                    const isFirstDay = dateStr === booking.start_date;
+                    const isLastDay = dateStr === booking.end_date;
+
+                    if (!(isFirstDay || isLastDay)) {
+                        allBookingsArePartial = false;
+                        break;
+                    }
+                    totalHours += duration;
+                }
+
+                if (totalHours < 5 && allBookingsArePartial) {
+                    isPartiallyAvailable = true;
+                    if (bookings.length === 1) {
+                        const booking = bookings[0];
+                        if (dateStr === booking.start_date) {
+                            partialBookingTime = booking.start_time;
+                        } else if (dateStr === booking.end_date) {
+                            partialBookingTime = booking.end_time;
+                        }
+                    } else {
+                        partialBookingTime = `${bookings.length}×`;
+                    }
+                }
             }
 
-            const todayClass = isToday ? 'ring-2 ring-orange-500' : '';
+            const isFullyBooked = isBooked && !isPartiallyAvailable;
+            const isFirstSelected = selectedStartDate === dateStr && !selectedEndDate;
+            const isInRange = selectedStartDate && selectedEndDate &&
+                dateStr >= selectedStartDate && dateStr <= selectedEndDate;
+
+            let cellClass = 'border border-gray-200 p-2 min-h-16 flex flex-col justify-between cursor-pointer transition-colors relative';
+            let dayNumberClass = 'text-sm font-semibold';
+
+            // Background colors
+            if (!isCurrentMonth) {
+                cellClass += ' bg-gray-50';
+                dayNumberClass += ' text-gray-300';
+            } else if (isPast) {
+                cellClass += ' bg-gray-100';
+                dayNumberClass += ' text-gray-400';
+            } else if (isPartiallyAvailable) {
+                cellClass += ' hover:opacity-90';
+                dayNumberClass += ' text-gray-900';
+            } else if (isFullyBooked) {
+                cellClass += ' hover:opacity-90';
+                dayNumberClass += ' text-gray-900';
+            } else if (isFirstSelected) {
+                cellClass += ' bg-green-700 hover:bg-green-800';
+                dayNumberClass += ' text-white';
+            } else if (isInRange) {
+                cellClass += ' bg-green-600 hover:bg-green-700';
+                dayNumberClass += ' text-white';
+            } else if (isWeekend && isCurrentMonth) {
+                cellClass += ' bg-yellow-50 hover:bg-yellow-100';
+                dayNumberClass += ' text-gray-900';
+            } else {
+                cellClass += ' bg-white hover:bg-green-50';
+                dayNumberClass += ' text-gray-900';
+            }
+
+            // User name for booked cells
+            let userNameHtml = '';
+            if (isFullyBooked && bookings[0]) {
+                const userName = bookings[0].user_name || 'Unknown';
+                const nameParts = userName.trim().split(/\s+/);
+                const firstName = nameParts[0] || '';
+                const lastName = nameParts.slice(1).join(' ') || '';
+                const firstTrimmed = firstName.length > 10 ? firstName.substring(0, 9) + '…' : firstName;
+                const lastTrimmed = lastName.length > 10 ? lastName.substring(0, 9) + '…' : lastName;
+                userNameHtml = `<span class="text-xs leading-tight hidden md:block" style="font-size: 0.65rem; line-height: 1.1;">${escapeHtml(firstTrimmed)}<br>${escapeHtml(lastTrimmed)}</span>`;
+            }
+
+            // Time display for partial bookings
+            let timeDisplayHtml = '';
+            if (isPartiallyAvailable && partialBookingTime) {
+                timeDisplayHtml = `<span class="text-xs text-gray-600 mt-1">${partialBookingTime}</span>`;
+            }
+
+            // Tooltip
+            const tooltipText = (isFullyBooked || isPartiallyAvailable) && bookings[0]
+                ? escapeHtml(`${bookings[0].user_name || 'Unknown'} - ${bookings[0].start_time} to ${bookings[0].end_time}${bookings[0].description ? ' - ' + bookings[0].description.substring(0, 50) : ''}`)
+                : '';
+
+            // Cell style and selectability
+            let cellStyle = '';
+            let cellOnclick = '';
+            let cellDisabled = '';
+            const canSelectNow = isCurrentMonth && !isPast;
+
+            if (isPartiallyAvailable) {
+                cellStyle = 'background-color: #F0E68C;';
+                cellOnclick = `onclick="selectDate('${dateStr}')"`;
+            } else if (isFullyBooked) {
+                const bookedColor = bookings[0] ? getUserBookingColor(bookings[0].user_id) : '#ffb96e';
+                cellStyle = `background-color: ${bookedColor}; cursor: not-allowed;`;
+                cellDisabled = 'disabled';
+            } else if (canSelectNow) {
+                cellOnclick = `onclick="selectDate('${dateStr}')"`;
+            } else {
+                cellStyle = 'cursor: not-allowed;';
+                cellDisabled = 'disabled';
+            }
 
             html += `
-                <div class="border border-gray-200 p-2 min-h-12 flex items-center justify-center cursor-pointer hover:bg-gray-100 ${todayClass}"
-                     style="background-color: ${bgColor}; color: ${textColor};"
-                     onclick="selectCalendarDate('${dateStr}')">
-                    <span class="text-sm font-medium">${currentDate.getDate()}</span>
-                </div>
+                <button type="button" class="${cellClass}"
+                    ${cellStyle ? `style="${cellStyle}"` : ''}
+                    ${cellOnclick}
+                    ${cellDisabled}
+                    title="${tooltipText}">
+                    <span class="${dayNumberClass}">${currentDate.getDate()}</span>
+                    ${timeDisplayHtml}
+                    ${userNameHtml}
+                </button>
             `;
 
             currentDate.setDate(currentDate.getDate() + 1);
         }
     }
 
+    html += `
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <span class="flex items-center gap-2"><span class="w-4 h-4 bg-green-600 rounded"></span>Selected Range</span>
+                <span class="flex items-center gap-2"><span class="w-4 h-4 rounded border border-gray-300" style="background-color: #F0E68C;"></span>Partially Available (&lt;5h)</span>
+                <span class="flex items-center gap-2"><span class="w-4 h-4 rounded border border-gray-300" style="background-color: #ffb96e;"></span>Fully Booked</span>
+                <span class="flex items-center gap-2"><span class="w-4 h-4 bg-yellow-50 rounded border border-yellow-200"></span>Weekend</span>
+            </div>
+        </div>
+    `;
+
     container.innerHTML = html;
+    updateDateDisplay();
 }
 
-function selectCalendarDate(dateStr) {
-    if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
-        // Start new selection
+// Previous month
+function previousMonth() {
+    currentCalendarMonth.setDate(1);
+    currentCalendarMonth.setMonth(currentCalendarMonth.getMonth() - 1);
+    buildCalendar();
+}
+
+// Next month
+function nextMonth() {
+    currentCalendarMonth.setDate(1);
+    currentCalendarMonth.setMonth(currentCalendarMonth.getMonth() + 1);
+    buildCalendar();
+}
+
+// Select date range
+function selectDate(dateStr) {
+    if (!selectedStartDate) {
         selectedStartDate = dateStr;
-        selectedEndDate = null;
-    } else {
-        // Complete selection
-        if (dateStr < selectedStartDate) {
+    } else if (!selectedEndDate) {
+        const date1 = new Date(selectedStartDate);
+        const date2 = new Date(dateStr);
+
+        if (date2 >= date1) {
+            selectedEndDate = dateStr;
+        } else {
             selectedEndDate = selectedStartDate;
             selectedStartDate = dateStr;
-        } else {
-            selectedEndDate = dateStr;
         }
+    } else {
+        selectedStartDate = dateStr;
+        selectedEndDate = null;
     }
 
-    updateDateRangeDisplay();
-    renderBookingCalendar();
+    buildCalendar();
     updateBookButton();
 }
 
-function updateDateRangeDisplay() {
-    const el = document.getElementById('selected-date-range');
-    if (selectedStartDate && selectedEndDate) {
-        el.textContent = `Selected: ${selectedStartDate} to ${selectedEndDate}`;
-    } else if (selectedStartDate) {
-        el.textContent = `Start: ${selectedStartDate} — Click to select end date`;
-    } else {
-        el.textContent = 'Click to select start date, then end date';
+// Select all working days (Mon-Fri) of a week
+function selectWeek(weekStartDate) {
+    if (!selectedEquipmentForBooking) {
+        showToast('Please select equipment first', 'warning');
+        return;
     }
+
+    const startDate = new Date(weekStartDate);
+    const workingDays = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < 5; i++) {
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + i);
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+
+        const isCurrentMonth = date.getMonth() === currentCalendarMonth.getMonth();
+        const isPast = date < today;
+        const bookings = allBookingsForEquipment.filter(b =>
+            dateStr >= b.start_date && dateStr <= b.end_date
+        );
+        const isBooked = bookings.length > 0;
+
+        if (isCurrentMonth && !isPast && !isBooked) {
+            workingDays.push(dateStr);
+        }
+    }
+
+    if (workingDays.length === 0) {
+        showToast('No available working days in this week', 'warning');
+        return;
+    }
+
+    selectedStartDate = workingDays[0];
+    selectedEndDate = workingDays[workingDays.length - 1];
+
+    buildCalendar();
+    updateBookButton();
 }
 
-function bookingCalendarPrev() {
-    bookingCalendarDate.setMonth(bookingCalendarDate.getMonth() - 1);
-    renderBookingCalendar();
-}
+// Update date display
+function updateDateDisplay() {
+    const rangeEl = document.getElementById('dateRange');
+    if (!rangeEl) return;
 
-function bookingCalendarNext() {
-    bookingCalendarDate.setMonth(bookingCalendarDate.getMonth() + 1);
-    renderBookingCalendar();
+    if (selectedStartDate && selectedEndDate) {
+        rangeEl.textContent = `${selectedStartDate} to ${selectedEndDate}`;
+    } else if (selectedStartDate) {
+        rangeEl.textContent = selectedStartDate;
+    } else {
+        rangeEl.textContent = 'Choose dates';
+    }
 }
 
 function toggleCard(cardId) {
@@ -1453,6 +1777,7 @@ function resetBookingForm() {
     selectedEquipmentForBooking = null;
     selectedStartDate = null;
     selectedEndDate = null;
+    allBookingsForEquipment = [];
 
     document.getElementById('selected-equipment-display').classList.add('hidden');
     document.getElementById('inline-start-time').value = '08:00';
@@ -1461,10 +1786,9 @@ function resetBookingForm() {
     document.getElementById('desc-char-count').textContent = '0 / 10,240';
     document.getElementById('booking-message').classList.add('hidden');
 
-    updateDateRangeDisplay();
     updateBookButton();
     renderEquipmentGrid();
-    renderBookingCalendar();
+    buildCalendar();
 }
 
 // ===============================
@@ -2235,43 +2559,60 @@ async function toggleUserStatus(userId, isActive) {
 // ===============================
 async function loadEquipmentManagement() {
     const [eqData, typesData] = await Promise.all([
-        apiCall('/api/equipment'),
+        apiCall('/api/equipment?include_inactive=true'),
         apiCall('/api/admin/equipment-types')
     ]);
 
     allEquipmentData = eqData.equipment || [];
     allEquipmentTypes = typesData.types || [];
 
-    // Render types
+    // Render types with item counts and aligned styling
     const typesList = document.getElementById('types-list');
-    typesList.innerHTML = allEquipmentTypes.map(t => `
-        <div class="p-4 border rounded-lg">
-            <div class="flex justify-between items-start">
-                <div>
-                    <div class="font-medium">${escapeHtml(t.name)}</div>
-                    <div class="text-sm text-gray-500">${escapeHtml(t.description || 'No description')}</div>
+    typesList.innerHTML = allEquipmentTypes.map(t => {
+        const count = allEquipmentData.filter(e => e.type_id === t.id).length;
+        return `
+            <div class="border border-brand-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div class="flex items-start justify-between mb-2">
+                    <h3 class="font-semibold text-gray-900">${escapeHtml(t.name)}</h3>
+                    <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">${count} items</span>
                 </div>
-                <button onclick="showTypeModal(${t.id})" class="text-orange-600 hover:underline text-sm">Edit</button>
+                ${t.description ? `<p class="text-sm text-gray-600 mb-3">${escapeHtml(t.description)}</p>` : ''}
+                <div class="flex gap-2">
+                    <button onclick="showTypeModal(${t.id})" class="text-xs text-brand-600 hover:text-brand-700 font-medium transition-colors">Edit</button>
+                    ${count === 0
+                        ? `<button onclick="deleteEquipmentType(${t.id})" class="text-xs text-red-600 hover:text-red-700 font-medium transition-colors">Delete</button>`
+                        : `<span class="text-xs text-gray-500">Cannot delete (${count} items)</span>`
+                    }
+                </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 
-    // Render equipment table
+    // Render equipment table with Deactivate/Activate actions
     const tbody = document.getElementById('equipment-table-body');
     tbody.innerHTML = allEquipmentData.map(e => `
-        <tr>
-            <td>
-                <div class="font-medium">${escapeHtml(e.name)}</div>
+        <tr class="hover:bg-gray-50">
+            <td class="py-3 px-4">
+                <div class="font-medium text-gray-900">${escapeHtml(e.name)}</div>
                 <div class="text-xs text-gray-500">${escapeHtml(e.description?.slice(0, 50) || '')}${e.description?.length > 50 ? '...' : ''}</div>
             </td>
-            <td>${escapeHtml(e.location || '-')}</td>
-            <td>${escapeHtml(e.type_name || '-')}</td>
-            <td class="text-center">${e.managers?.length || 0}</td>
-            <td class="text-center">
-                <span class="badge ${e.is_active ? 'status-active' : 'status-cancelled'}">${e.is_active ? 'Active' : 'Inactive'}</span>
+            <td class="py-3 px-4 text-gray-600">${escapeHtml(e.location || '-')}</td>
+            <td class="py-3 px-4"><span class="badge badge-user text-xs">${escapeHtml(e.type_name || 'No type')}</span></td>
+            <td class="py-3 px-4 text-center">${e.managers?.length || 0}</td>
+            <td class="py-3 px-4 text-center">
+                ${e.is_active
+                    ? '<span class="badge status-active">Active</span>'
+                    : '<span class="inline-block px-3 py-1 text-xs font-medium rounded-full bg-gray-200 text-gray-600">Not Active</span>'
+                }
             </td>
-            <td class="text-right">
-                <button onclick="showEquipmentModal(${e.id})" class="text-orange-600 hover:underline text-sm">Edit</button>
+            <td class="py-3 px-4 text-right">
+                <div class="flex gap-2 justify-end">
+                    <button onclick="showEquipmentModal(${e.id})" class="text-xs text-gray-600 hover:text-gray-700 font-medium transition-colors">Edit</button>
+                    ${e.is_active
+                        ? `<button onclick="toggleEquipmentStatus(${e.id}, 0)" class="text-xs text-red-600 hover:text-red-700 font-medium transition-colors">Deactivate</button>`
+                        : `<button onclick="toggleEquipmentStatus(${e.id}, 1)" class="text-xs text-green-600 hover:text-green-700 font-medium transition-colors">Activate</button>`
+                    }
+                </div>
             </td>
         </tr>
     `).join('');
@@ -2380,6 +2721,53 @@ async function saveType() {
         loadEquipmentManagement();
     } else {
         showToast(result.detail || 'Failed to save type', 'error');
+    }
+}
+
+async function toggleEquipmentStatus(equipmentId, newStatus) {
+    const action = newStatus === 1 ? 'activate' : 'deactivate';
+    if (!confirm(`Are you sure you want to ${action} this equipment?`)) {
+        return;
+    }
+
+    try {
+        const result = await apiCall(`/api/equipment/${equipmentId}?status=${newStatus}`, 'DELETE');
+
+        if (result.success || result.message) {
+            // Update local data
+            const equipment = allEquipmentData.find(eq => eq.id === equipmentId);
+            if (equipment) {
+                equipment.is_active = newStatus === 1;
+            }
+
+            showToast(result.message || `Equipment ${action}d successfully`, 'success');
+            loadEquipmentManagement();
+        } else {
+            showToast(result.detail || `Failed to ${action} equipment`, 'error');
+        }
+    } catch (error) {
+        console.error('Error updating equipment status:', error);
+        showToast(`Error ${action}ing equipment`, 'error');
+    }
+}
+
+async function deleteEquipmentType(typeId) {
+    if (!confirm('Are you sure you want to delete this equipment type?')) {
+        return;
+    }
+
+    try {
+        const result = await apiCall(`/api/admin/equipment-types/${typeId}`, 'DELETE');
+
+        if (result.success || result.message) {
+            showToast(result.message || 'Equipment type deleted', 'success');
+            loadEquipmentManagement();
+        } else {
+            showToast(result.detail || 'Failed to delete type', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting equipment type:', error);
+        showToast('Error deleting equipment type', 'error');
     }
 }
 
@@ -2586,9 +2974,32 @@ async function logout() {
 }
 
 // ===============================
+// Sidebar Date Display
+// ===============================
+function updateSidebarDate() {
+    const dateEl = document.getElementById('sidebar-date');
+    if (!dateEl) return;
+
+    const now = new Date();
+    const weekNumber = getWeekNumber(now);
+
+    // Short day names
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    const dayName = dayNames[now.getDay()];
+    const monthName = monthNames[now.getMonth()];
+    const day = now.getDate();
+    const year = now.getFullYear();
+
+    dateEl.textContent = `${dayName}, ${monthName} ${day}, ${year}, KW${weekNumber}`;
+}
+
+// ===============================
 // Initialize
 // ===============================
 document.addEventListener('DOMContentLoaded', () => {
+    updateSidebarDate();
     showSection('information');
 });
 </script>
