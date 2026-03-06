@@ -3,20 +3,20 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
 /* ============================================================================
-   CSS VARIABLES - Orange/Amber Theme (aligned with rfbooking-core)
+   CSS VARIABLES - Charcoal Theme (aligned with rfbooking-core)
    ============================================================================ */
 :root {
-    /* Primary Brand Colors - Orange/Amber */
-    --brand-50: #fff7ed;
-    --brand-100: #ffedd5;
-    --brand-200: #fed7aa;
-    --brand-300: #fdba74;
-    --brand-400: #fb923c;
-    --brand-500: #f97316;
-    --brand-600: #ea580c;
-    --brand-700: #c2410c;
-    --brand-800: #9a3412;
-    --brand-900: #7c2d12;
+    /* Primary Brand Colors - Charcoal */
+    --brand-50: #f8fafc;
+    --brand-100: #f1f5f9;
+    --brand-200: #e2e8f0;
+    --brand-300: #cbd5e1;
+    --brand-400: #94a3b8;
+    --brand-500: #64748b;
+    --brand-600: #2c3e50;
+    --brand-700: #1e2d3d;
+    --brand-800: #1a252f;
+    --brand-900: #0f172a;
 
     /* Secondary Colors */
     --gray-50: #f9fafb;
@@ -163,8 +163,8 @@ button {
 
 input:focus, select:focus, textarea:focus {
     outline: none;
-    border-color: var(--brand-500);
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+    border-color: var(--brand-600);
+    box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.15);
 }
 
 input[type="checkbox"]:checked,
@@ -203,6 +203,11 @@ input[type="radio"]:checked {
 
 .toggle-switch.active::after {
     transform: translateX(20px);
+}
+
+/* Green variant for email notifications */
+#emailNotificationsToggleSwitch.active {
+    background-color: #22c55e;
 }
 
 /* ============================================================================
@@ -361,8 +366,8 @@ tbody td {
 
 .form-input:focus {
     outline: none;
-    border-color: var(--accent-purple);
-    box-shadow: 0 0 0 3px rgba(124, 92, 219, 0.15);
+    border-color: var(--brand-600);
+    box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.15);
 }
 
 /* Toggle arrow transition */
@@ -469,8 +474,8 @@ tbody td {
 }
 
 .equipment-card.selected {
-    border-color: var(--brand-500);
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+    border-color: var(--brand-600);
+    box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.15);
 }
 
 .equipment-card-title {
@@ -1118,12 +1123,12 @@ tbody td {
 }
 
 /* ============================================================================
-   SIDEBAR STYLES
+   SIDEBAR STYLES width: 256px
    ============================================================================ */
 
 .sidebar {
     background-color: var(--sidebar-bg);
-    width: 256px;
+    width: 220px;
     min-height: 100vh;
     position: fixed;
     left: 0;
