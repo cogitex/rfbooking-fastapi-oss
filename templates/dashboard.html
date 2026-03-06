@@ -6,7 +6,7 @@
 {% block title %}Dashboard - {{ app_name }}{% endblock %}
 
 {% block body %}
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen" style="background-color: #e5e7eb">
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
@@ -124,191 +124,176 @@
              SECTION: Information
              =================================================================== -->
         <div id="section-information" class="section-content">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h2>
+            <div class="space-y-4">
+                <!-- User Info Card -->
+                <div class="card card-info">
+                    <div class="card-header cursor-pointer" onclick="toggleCard('userInfo')">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-bold">Your Information</h2>
+                            <span id="userInfoToggle" class="text-2xl text-gray-500 transition-transform">▼</span>
+                        </div>
+                    </div>
+                    <div id="userInfoContent" class="card-body py-3 px-4">
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+                            <div>
+                                <label class="text-xs font-semibold text-gray-600 uppercase">Name</label>
+                                <p id="userName" class="text-sm text-gray-900 font-medium">{{ user.name if user else 'Loading...' }}</p>
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-600 uppercase">Role</label>
+                                <p id="userRoleInfo" class="inline-block">
+                                    <span class="badge badge-{{ user.role_name | lower if user else 'user' }}">{{ user.role_name if user else 'User' }}</span>
+                                </p>
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-600 uppercase">Org</label>
+                                <p id="userOrg" class="text-sm text-gray-900 font-medium">{{ organization_name }}</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+                            <div>
+                                <label class="text-xs font-semibold text-gray-600 uppercase">Email</label>
+                                <p id="userEmailInfo" class="text-sm text-gray-900 font-medium truncate">{{ user.email if user else 'Loading...' }}</p>
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-600 uppercase">Last Login</label>
+                                <p id="userLastLogin" class="text-sm text-gray-700">{% if user and user.last_login_at %}{{ user.last_login_at }}{% else %}Never{% endif %}</p>
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-600 uppercase">Session</label>
+                                <p id="cookieLifetime" class="text-xs text-gray-700">Calculating...</p>
+                            </div>
+                        </div>
+                        <!-- Email Notifications Preference -->
+                        <div class="mt-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <label class="text-sm font-semibold text-gray-700">Email Notifications</label>
+                                    <p class="text-xs text-gray-600 mt-1">Receive booking reminders and updates via email</p>
+                                </div>
+                                <div id="emailNotificationsToggleSwitch" class="toggle-switch" onclick="toggleEmailNotifications()"></div>
+                            </div>
+                        </div>
 
-            <!-- User Info Card -->
-            <div class="card card-info mb-6">
-                <div class="card-header cursor-pointer" onclick="toggleCard('userInfo')">
-                    <div class="flex items-center justify-between w-full">
-                        <h2 class="text-lg font-bold">Your Information</h2>
-                        <span id="userInfoToggle" class="text-2xl text-gray-500 transition-transform">▼</span>
+                        <div class="flex items-center gap-2 mt-4">
+                            <a href="#" onclick="logoutUser(); return false;" class="text-xs text-red-600 hover:text-red-700 font-medium transition-colors">Logout</a>
+                            <span class="text-xs text-gray-500">— You'll need to request a new registration link to log in again.</span>
+                        </div>
                     </div>
                 </div>
-                <div id="userInfoContent" class="card-body py-3 px-4">
-                    <!-- First Row: Name, Role, Organization -->
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
-                        <div>
-                            <label class="text-xs font-semibold text-gray-600 uppercase">Name</label>
-                            <p id="userName" class="text-sm text-gray-900 font-medium">{{ user.name if user else 'Loading...' }}</p>
-                        </div>
-                        <div>
-                            <label class="text-xs font-semibold text-gray-600 uppercase">Role</label>
-                            <p id="userRoleInfo" class="inline-block">
-                                <span class="badge badge-{{ user.role_name | lower if user else 'user' }}">{{ user.role_name if user else 'User' }}</span>
-                            </p>
-                        </div>
-                        <div>
-                            <label class="text-xs font-semibold text-gray-600 uppercase">Org</label>
-                            <p id="userOrg" class="text-sm text-gray-900 font-medium">{{ organization_name }}</p>
+
+                <!-- My Bookings Card -->
+                <div class="card card-booking">
+                    <div class="card-header cursor-pointer" onclick="toggleCard('myBookings')">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-bold">My Bookings</h2>
+                            <span id="myBookingsToggle" class="text-2xl text-gray-500 transition-transform">▼</span>
                         </div>
                     </div>
-
-                    <!-- Second Row: Email, Last Login, Session Expiry -->
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
-                        <div>
-                            <label class="text-xs font-semibold text-gray-600 uppercase">Email</label>
-                            <p id="userEmailInfo" class="text-sm text-gray-900 font-medium truncate">{{ user.email if user else 'Loading...' }}</p>
-                        </div>
-                        <div>
-                            <label class="text-xs font-semibold text-gray-600 uppercase">Last Login</label>
-                            <p id="userLastLogin" class="text-sm text-gray-700">{% if user and user.last_login_at %}{{ user.last_login_at }}{% else %}Never{% endif %}</p>
-                        </div>
-                        <div>
-                            <label class="text-xs font-semibold text-gray-600 uppercase">Session</label>
-                            <p id="cookieLifetime" class="text-xs text-gray-700">Calculating...</p>
+                    <div id="myBookingsContent" class="card-body">
+                        <div id="my-bookings-summary" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[550px] overflow-y-auto">
+                            <p class="text-gray-500 text-center py-8 col-span-full">Loading bookings...</p>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Email Notifications Toggle -->
-                    <div class="mt-4">
+                <!-- System-wide User Policies -->
+                <div class="card">
+                    <div class="card-header cursor-pointer" onclick="toggleCard('userPolicies')">
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-semibold text-gray-700">Email Notifications</label>
-                                <p class="text-xs text-gray-600 mt-1">Receive booking reminders and updates via email</p>
+                                <h2 class="text-lg font-bold text-brand-700">
+                                    <svg class="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                    System-wide User Policies
+                                </h2>
+                                <p class="text-sm text-gray-600">Security and usage limits applied to all users</p>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="emailNotificationsToggle" class="sr-only peer"
-                                       {{ 'checked' if user and user.email_notifications_enabled else '' }}
-                                       onchange="updateEmailNotificationPreference(this.checked)">
-                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4
-                                            peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full
-                                            peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px]
-                                            after:left-[2px] after:bg-white after:border-gray-300 after:border
-                                            after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500">
+                            <span id="userPoliciesToggle" class="text-2xl text-gray-500 transition-transform">▼</span>
+                        </div>
+                    </div>
+                    <div id="userPoliciesContent" class="card-body">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <!-- Token Limit Policy -->
+                            <div class="flex items-start p-3 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
+                                <div class="flex-shrink-0">
+                                    <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
                                 </div>
-                            </label>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-semibold text-blue-900">Active Sessions Limit</h3>
+                                    <p class="text-sm text-blue-800 mt-1">
+                                        <span class="font-bold text-lg">10</span> maximum active tokens per user
+                                    </p>
+                                    <p class="text-xs text-blue-700 mt-2">
+                                        Users can be logged in on up to 10 devices simultaneously. Oldest sessions are automatically logged out when this limit is exceeded.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Booking Limit Policy -->
+                            <div class="flex items-start p-3 bg-green-50 border-l-4 border-green-500 rounded-lg">
+                                <div class="flex-shrink-0">
+                                    <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-semibold text-green-900">Daily Booking Limit</h3>
+                                    <p class="text-sm text-green-800 mt-1">
+                                        <span class="font-bold text-lg">20</span> maximum bookings per day
+                                    </p>
+                                    <p class="text-xs text-green-700 mt-2">
+                                        Each user can create up to 20 new bookings per day. This prevents system abuse and ensures fair resource allocation.
+                                    </p>
+                                    <p class="text-xs text-green-700 mt-2 pt-2 border-t border-green-200">
+                                        <strong>Note:</strong> Regular users are limited to 5 notification emails per day (booking and cancellation confirmations, reminders) to prevent inbox overload.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Booking Duration Limit Policy -->
+                            <div class="flex items-start p-3 bg-purple-50 border-l-4 border-purple-500 rounded-lg">
+                                <div class="flex-shrink-0">
+                                    <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-semibold text-purple-900">Maximum Booking Duration</h3>
+                                    <p class="text-sm text-purple-800 mt-1">
+                                        <span class="font-bold text-lg">30 days</span> maximum per single booking
+                                    </p>
+                                    <p class="text-xs text-purple-700 mt-2">
+                                        Each individual booking can span up to 30 days (1 month). This ensures fair equipment sharing and prevents long-term monopolization.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Logout Link -->
-                    <div class="flex items-center gap-2 mt-4">
-                        <a href="#" onclick="logoutUser(); return false;" class="text-xs text-red-600 hover:text-red-700 font-medium transition-colors">Logout</a>
-                        <span class="text-xs text-gray-500">— You'll need to request a new registration link to log in again.</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- My Bookings Card -->
-            <div class="card card-booking mb-6">
-                <div class="card-header cursor-pointer" onclick="toggleCard('myBookings')">
-                    <div class="flex items-center justify-between w-full">
-                        <h2 class="text-lg font-bold">My Bookings</h2>
-                        <span id="myBookingsToggle" class="text-2xl text-gray-500 transition-transform">▼</span>
-                    </div>
-                </div>
-                <div id="myBookingsContent" class="card-body">
-                    <div id="my-bookings-summary" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[550px] overflow-y-auto">
-                        <p class="text-gray-500 text-center py-8 col-span-full">Loading bookings...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- System-wide User Policies -->
-            <div class="card">
-                <div class="card-header cursor-pointer" onclick="toggleCard('userPolicies')">
-                    <div class="flex items-center justify-between w-full">
-                        <div>
-                            <h2 class="text-lg font-bold text-brand-700">
-                                <svg class="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <!-- Additional Info -->
+                        <div class="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-gray-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                System-wide User Policies
-                            </h2>
-                            <p class="text-sm text-gray-600">Security and usage limits applied to all users</p>
-                        </div>
-                        <span id="userPoliciesToggle" class="text-2xl text-gray-500 transition-transform">▼</span>
-                    </div>
-                </div>
-                <div id="userPoliciesContent" class="card-body">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <!-- Token Limit Policy -->
-                        <div class="flex items-start p-3 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
-                            <div class="flex-shrink-0">
-                                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <h3 class="text-sm font-semibold text-blue-900">Active Sessions Limit</h3>
-                                <p class="text-sm text-blue-800 mt-1">
-                                    <span class="font-bold text-lg">10</span> maximum active tokens per user
-                                </p>
-                                <p class="text-xs text-blue-700 mt-2">
-                                    Users can be logged in on up to 10 devices simultaneously. Oldest sessions are automatically logged out when this limit is exceeded.
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Booking Limit Policy -->
-                        <div class="flex items-start p-3 bg-green-50 border-l-4 border-green-500 rounded-lg">
-                            <div class="flex-shrink-0">
-                                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <h3 class="text-sm font-semibold text-green-900">Daily Booking Limit</h3>
-                                <p class="text-sm text-green-800 mt-1">
-                                    <span class="font-bold text-lg">20</span> maximum bookings per day
-                                </p>
-                                <p class="text-xs text-green-700 mt-2">
-                                    Each user can create up to 20 new bookings per day. This prevents system abuse and ensures fair resource allocation.
-                                </p>
-                                <p class="text-xs text-green-700 mt-2 pt-2 border-t border-green-200">
-                                    <strong>Note:</strong> Regular users are limited to 5 notification emails per day (booking and cancellation confirmations, reminders) to prevent inbox overload.
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Booking Duration Limit Policy -->
-                        <div class="flex items-start p-3 bg-purple-50 border-l-4 border-purple-500 rounded-lg">
-                            <div class="flex-shrink-0">
-                                <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <h3 class="text-sm font-semibold text-purple-900">Maximum Booking Duration</h3>
-                                <p class="text-sm text-purple-800 mt-1">
-                                    <span class="font-bold text-lg">30 days</span> maximum per single booking
-                                </p>
-                                <p class="text-xs text-purple-700 mt-2">
-                                    Each individual booking can span up to 30 days (1 month). This ensures fair equipment sharing and prevents long-term monopolization.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Additional Info -->
-                    <div class="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                        <div class="flex items-start">
-                            <svg class="w-5 h-5 text-gray-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <div class="text-xs text-gray-600">
-                                <p class="font-medium text-gray-800 mb-1">Policy Notes:</p>
-                                <ul class="list-disc list-inside space-y-1 ml-2">
-                                    <li>These limits apply to all user roles (user, manager, admin)</li>
-                                    <li>Daily limits reset at midnight UTC</li>
-                                    <li>Token limit ensures security and session hygiene</li>
-                                    <li>Daily booking limit prevents accidental or malicious system overload</li>
-                                    <li>Booking duration limit promotes fair equipment sharing across users</li>
-                                </ul>
+                                <div class="text-xs text-gray-600">
+                                    <p class="font-medium text-gray-800 mb-1">Policy Notes:</p>
+                                    <ul class="list-disc list-inside space-y-1 ml-2">
+                                        <li>These limits apply to all user roles (user, manager, admin)</li>
+                                        <li>Daily limits reset at midnight UTC</li>
+                                        <li>Token limit ensures security and session hygiene</li>
+                                        <li>Daily booking limit prevents accidental or malicious system overload</li>
+                                        <li>Booking duration limit promotes fair equipment sharing across users</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1252,6 +1237,10 @@ async function apiCall(url, method = 'GET', body = null) {
     };
     if (body) options.body = JSON.stringify(body);
     const response = await fetch(url, options);
+    if (!response.ok) {
+        console.error(`API call failed: ${method} ${url} - ${response.status} ${response.statusText}`);
+        throw new Error(`API ${response.status}: ${response.statusText}`);
+    }
     return response.json();
 }
 
@@ -1394,16 +1383,40 @@ function calculateSessionExpiry() {
     expiryElement.textContent = `${daysRemaining} days, ${hoursRemaining} hours`;
 }
 
-async function updateEmailNotificationPreference(enabled) {
+/**
+ * Initialize email notification toggle based on user data
+ */
+function initializeEmailNotificationToggle(user) {
+    const toggle = document.getElementById('emailNotificationsToggleSwitch');
+    if (toggle && user) {
+        const isEnabled = user.email_notifications_enabled !== 0 && user.email_notifications_enabled !== false;
+        if (isEnabled) {
+            toggle.classList.add('active');
+        } else {
+            toggle.classList.remove('active');
+        }
+    }
+}
+
+async function toggleEmailNotifications() {
+    const toggle = document.getElementById('emailNotificationsToggleSwitch');
+    const isCurrentlyEnabled = toggle.classList.contains('active');
+    const newState = !isCurrentlyEnabled;
+
     try {
-        await apiCall('/api/user/notification-preferences', 'PATCH', {
-            email_notifications_enabled: enabled
+        await apiCall('/api/auth/notification-preferences', 'PATCH', {
+            email_notifications_enabled: newState
         });
+
+        // Update UI on success
+        if (newState) {
+            toggle.classList.add('active');
+        } else {
+            toggle.classList.remove('active');
+        }
         showToast('Notification preferences updated', 'success');
     } catch (e) {
         showToast('Failed to update preferences', 'error');
-        // Revert the checkbox state
-        document.getElementById('emailNotificationsToggle').checked = !enabled;
     }
 }
 
@@ -1467,8 +1480,20 @@ async function loadBookingsForEquipment(equipmentId) {
         allBookingsForEquipment = [];
         return;
     }
-    const data = await apiCall(`/api/bookings?equipment_id=${equipmentId}`);
-    allBookingsForEquipment = (data.bookings || []).filter(b => b.status === 'active');
+    try {
+        const data = await apiCall(`/api/bookings?equipment_id=${equipmentId}`);
+        allBookingsForEquipment = (data.bookings || []).filter(b => b.status === 'active');
+        console.log(`Loaded ${allBookingsForEquipment.length} active bookings for equipment ${equipmentId}`);
+        if (allBookingsForEquipment.length > 0) {
+            console.log('Sample booking data:', allBookingsForEquipment[0]);
+            console.log('User name in first booking:', allBookingsForEquipment[0].user_name);
+        }
+    } catch (error) {
+        console.error(`Failed to load bookings for equipment ${equipmentId}:`, error);
+        allBookingsForEquipment = [];
+        // Show user-friendly error toast
+        showToast(`Could not load booking calendar for this equipment. Please try again.`, 'error');
+    }
 }
 
 // Generate consistent color for each user (orange spectrum)
@@ -1765,12 +1790,16 @@ function buildCalendar() {
             let userNameHtml = '';
             if (isFullyBooked && bookings[0]) {
                 const userName = bookings[0].user_name || 'Unknown';
+                if (!bookings[0].user_name) {
+                    console.warn(`Booking ${bookings[0].id} at ${dateStr} missing user_name. Booking data:`, bookings[0]);
+                }
                 const nameParts = userName.trim().split(/\s+/);
                 const firstName = nameParts[0] || '';
                 const lastName = nameParts.slice(1).join(' ') || '';
                 const firstTrimmed = firstName.length > 10 ? firstName.substring(0, 9) + '…' : firstName;
                 const lastTrimmed = lastName.length > 10 ? lastName.substring(0, 9) + '…' : lastName;
-                userNameHtml = `<span class="text-xs leading-tight hidden md:block" style="font-size: 0.65rem; line-height: 1.1;">${escapeHtml(firstTrimmed)}<br>${escapeHtml(lastTrimmed)}</span>`;
+                // Temporarily remove 'hidden md:block' for debugging - always show name
+                userNameHtml = `<span class="text-xs leading-tight text-gray-900 font-semibold" style="font-size: 0.65rem; line-height: 1.1;">${escapeHtml(firstTrimmed)}<br>${escapeHtml(lastTrimmed)}</span>`;
             }
 
             // Time display for partial bookings
@@ -1978,6 +2007,7 @@ async function submitBooking() {
     if (data.success) {
         showToast('Booking created successfully!', 'success');
         resetBookingForm();
+        showSection('information');
     } else {
         const msgEl = document.getElementById('booking-message');
         msgEl.classList.remove('hidden');
@@ -2067,43 +2097,144 @@ async function askAI() {
 
         loadingEl.classList.add('hidden');
 
-        if (data.error) {
+        if (data.error || data.detail) {
             errorEl.classList.remove('hidden');
-            document.getElementById('ai-error-message').textContent = data.error;
+            document.getElementById('ai-error-message').textContent = data.error || data.detail;
             return;
         }
 
-        if (data.recommendations?.length) {
-            explanationEl.textContent = data.explanation || '';
-            recommendationsEl.innerHTML = data.recommendations.map(r => `
-                <div class="p-4 border-2 border-gray-200 rounded-lg hover:border-orange-300 transition-all">
-                    <h4 class="font-semibold text-gray-800">${escapeHtml(r.name)}</h4>
-                    <p class="text-gray-600 text-sm mt-1">${escapeHtml(r.reasoning || 'Recommended by AI')}</p>
-                    ${r.available_dates ? `<p class="text-xs text-gray-500 mt-2">Available: ${r.available_dates}</p>` : ''}
-                    <button onclick="selectEquipmentFromAI(${r.equipment_id})" class="mt-3 text-orange-600 hover:text-orange-800 font-medium text-sm">
-                        Book this equipment →
+        // Use options if available (new format), otherwise fall back to recommendations
+        const options = data.options || data.recommendations || [];
+
+        if (options.length) {
+            // Display summary if available
+            explanationEl.textContent = data.summary || data.equipment_analysis || 'Here are the best options found for your request:';
+            
+            // Display tips if available
+            if (data.tips && data.tips.length > 0) {
+                const tipsHtml = data.tips.map(tip => `<div class="text-sm text-blue-800 bg-blue-50 p-2 rounded mb-2 border-l-4 border-blue-500">${escapeHtml(tip)}</div>`).join('');
+                explanationEl.insertAdjacentHTML('afterend', tipsHtml);
+            }
+
+            recommendationsEl.innerHTML = options.map((opt, index) => {
+                // Determine display values based on whether it's an 'option' (with dates) or just a recommendation
+                const name = opt.equipment_name || opt.name;
+                const reason = opt.reason || opt.reasoning;
+                const startDate = opt.start_date;
+                const endDate = opt.end_date;
+                const duration = opt.duration_days;
+                
+                let dateDisplay = '';
+                if (startDate && endDate) {
+                    dateDisplay = `
+                        <div class="mt-2 p-2 bg-green-50 rounded border border-green-100">
+                            <div class="flex items-center gap-2 text-sm font-medium text-green-800">
+                                <span>📅 ${formatDate(startDate)} - ${formatDate(endDate)}</span>
+                                <span class="text-xs bg-green-200 px-2 py-0.5 rounded-full text-green-800">${duration} days</span>
+                            </div>
+                            ${opt.nearest_alternative ? '<p class="text-xs text-orange-600 mt-1">⚠️ Preferred dates unavailable. Closest alternative.</p>' : ''}
+                        </div>
+                    `;
+                }
+
+                // Pass the full option object to the booking function
+                // We encode it to base64 to safely pass it in the onclick handler
+                const optionData = btoa(JSON.stringify(opt));
+
+                return `
+                <div class="p-4 border-2 border-gray-200 rounded-lg hover:border-orange-300 transition-all bg-white shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <h4 class="font-semibold text-gray-800 text-lg">${escapeHtml(name)}</h4>
+                        ${opt.exact_match ? '<span class="badge badge-active text-xs">Exact Match</span>' : ''}
+                    </div>
+                    
+                    <p class="text-gray-600 text-sm mt-2">${escapeHtml(reason || 'Recommended by AI')}</p>
+                    
+                    ${dateDisplay}
+                    
+                    <button onclick="bookOptionFromAI('${optionData}')" class="mt-4 w-full btn-primary py-2 text-sm flex items-center justify-center gap-2">
+                        <span>Book this Option</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                     </button>
                 </div>
-            `).join('');
+            `}).join('');
+            
             resultsEl.classList.remove('hidden');
         } else {
             errorEl.classList.remove('hidden');
-            document.getElementById('ai-error-message').textContent = 'No matching equipment found. Try describing your requirements differently.';
+            document.getElementById('ai-error-message').textContent = data.message || 'No matching equipment found. Try describing your requirements differently.';
         }
     } catch (e) {
+        console.error(e);
         loadingEl.classList.add('hidden');
         errorEl.classList.remove('hidden');
         document.getElementById('ai-error-message').textContent = 'Failed to get AI recommendations. Please try again.';
     }
 }
 
-function selectEquipmentFromAI(equipmentId) {
-    selectedEquipmentForBooking = equipmentId;
-    const eq = allEquipmentData.find(e => e.id === equipmentId);
-    if (eq) {
-        showSection('new-booking');
-        setTimeout(() => selectEquipmentForBooking(eq.id, eq.name, eq.type_name, eq.location), 100);
+async function bookOptionFromAI(encodedOption) {
+    try {
+        const option = JSON.parse(atob(encodedOption));
+        const equipmentId = option.equipment_id || option.id;
+
+        // Ensure equipment data is loaded
+        if (allEquipmentData.length === 0) {
+            // Load equipment data
+            const eqData = await apiCall('/api/equipment');
+            allEquipmentData = eqData.equipment || [];
+            console.log('Loaded equipment data:', allEquipmentData.length, 'items');
+        }
+
+        // Parse equipment ID as integer for comparison (API returns numbers, but option might be string)
+        const equipmentIdNum = parseInt(equipmentId, 10);
+        if (isNaN(equipmentIdNum)) {
+            console.error('Invalid equipment ID:', equipmentId);
+            showToast('Invalid equipment ID. Please try again.', 'error');
+            return;
+        }
+
+        // Find equipment in local data (compare as numbers)
+        const eq = allEquipmentData.find(e => e.id === equipmentIdNum || e.id === equipmentId);
+
+        if (eq) {
+            console.log('Found equipment:', eq.id, eq.name);
+            // Switch to booking tab (this will also load equipment data again, but that's okay)
+            showSection('new-booking');
+
+            // Set equipment and dates after a short delay to allow UI to render
+            setTimeout(() => {
+                // 1. Select equipment
+                selectEquipmentForBooking(eq.id, eq.name, eq.type_name || '', eq.location || '');
+
+                // 2. Pre-fill dates if available
+                if (option.start_date && option.end_date) {
+                    selectedStartDate = option.start_date;
+                    selectedEndDate = option.end_date;
+
+                    // Force calendar update
+                    buildCalendar();
+                    updateDateDisplay();
+                    updateBookButton();
+
+                    // Scroll to calendar
+                    document.getElementById('booking-calendar-container').scrollIntoView({ behavior: 'smooth' });
+
+                    showToast(`Dates pre-selected: ${option.start_date} to ${option.end_date}`, 'success');
+                }
+            }, 100);
+        } else {
+            console.error('Equipment not found in allEquipmentData. ID:', equipmentId, 'Parsed:', equipmentIdNum, 'Available IDs:', allEquipmentData.map(e => e.id));
+            showToast('Equipment details not found. Please try selecting equipment manually.', 'error');
+        }
+    } catch (e) {
+        console.error('Error booking AI option:', e);
+        showToast('Failed to process booking option', 'error');
     }
+}
+
+async function selectEquipmentFromAI(equipmentId) {
+    // Legacy support or fallback
+    await bookOptionFromAI(btoa(JSON.stringify({ equipment_id: equipmentId })));
 }
 
 // ===============================
@@ -3213,6 +3344,12 @@ function updateSidebarDate() {
 // ===============================
 document.addEventListener('DOMContentLoaded', () => {
     updateSidebarDate();
+
+    // Initialize email notification toggle
+    if (userData) {
+        initializeEmailNotificationToggle(userData);
+    }
+
     // Read section from URL hash or default to 'information'
     const hash = window.location.hash.slice(1);
     const initialSection = hash || 'information';

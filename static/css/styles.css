@@ -1212,7 +1212,7 @@ tbody td {
 }
 
 .sidebar-link.active {
-    background-color: var(--brand-600);
+    background-color: #c2410c;
     color: white;
 }
 
