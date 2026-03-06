@@ -29,21 +29,20 @@ function getTodayDate() {
     return new Date().toISOString().split('T')[0];
 }
 
-// Notification toast
+// Notification toast (fallback for non-dashboard pages)
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');
-    toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 ${
-        type === 'success' ? 'bg-green-600' :
-        type === 'error' ? 'bg-red-600' :
-        'bg-blue-600'
-    }`;
-    toast.textContent = message;
+    toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:14px 24px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:1000;font-size:0.875rem;background:rgba(255,255,255,0.95);color:#1f2937;border:1px solid #e5e7eb;display:flex;align-items:center;gap:12px;max-width:480px;';
+    const colors = { success: '#10b981', error: '#ef4444', warning: '#f59e0b', info: '#3b82f6' };
+    const iconColor = colors[type] || colors.info;
+    toast.innerHTML = `<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:${iconColor};display:flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="${type === 'success' ? 'M5 13l4 4L19 7' : 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'}"/></svg></div><span>${message}</span>`;
     document.body.appendChild(toast);
 
     setTimeout(() => {
-        toast.classList.add('opacity-0', 'transition-opacity');
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
         setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, 6000);
 }
 
 // Confirmation dialog
