@@ -28,6 +28,7 @@ from app.database import get_db
 from app.middleware.auth import get_current_user, require_admin
 from app.models.equipment import Equipment, EquipmentTypeUser, AIUsage, AIQueryLog, AISpecificationRule
 from app.models.user import User
+from app.services.ai_temporal import TemporalParser
 
 router = APIRouter(prefix="/api/ai")
 
@@ -36,6 +37,9 @@ class AnalyzeRequest(BaseModel):
     """AI analyze request."""
 
     prompt: str
+    search_days: Optional[int] = 30
+    max_options: Optional[int] = 5
+    # Deprecated fields (kept for backward compatibility)
     preferred_start: Optional[date] = None
     preferred_end: Optional[date] = None
 
@@ -107,19 +111,30 @@ async def analyze_booking_request(
     )
 
     try:
-        # Call AI service
+        # Extract date constraints using hybrid parser (Stage 0)
+        today = date.today()
+        model_config = {'id': settings.ai.model}
+        date_constraints = TemporalParser.extract_date_constraints(
+            prompt=data.prompt,
+            today=today,
+            ai_client=ai_service.client,
+            model_config=model_config
+        )
+        print(f'[AI Assistant] Date constraints: {date_constraints}')
+
+        # Call AI service with date constraints and search days
         result = await ai_service.analyze_booking_request(
             prompt=data.prompt,
             equipment_list=equipment_list,
             rules=rules,
-            preferred_start=data.preferred_start,
-            preferred_end=data.preferred_end,
+            date_constraints=date_constraints,
+            search_days=data.search_days,
+            max_options=data.max_options,
             db=db,
             user=current_user,
         )
 
         # Log usage
-        today = date.today()
         usage = db.query(AIUsage).filter(AIUsage.date == today).first()
         if not usage:
             usage = AIUsage(date=today)
@@ -134,8 +149,8 @@ async def analyze_booking_request(
             user_id=current_user.id,
             prompt=data.prompt,
             response=str(result.get("recommendations", [])),
-            input_tokens=result.get("input_tokens", 0),
-            output_tokens=result.get("output_tokens", 0),
+            input_tokens=result.get("tokens", {}).get("input", 0),
+            output_tokens=result.get("tokens", {}).get("output", 0),
             model=settings.ai.model,
             success=True,
         )
@@ -145,13 +160,17 @@ async def analyze_booking_request(
         return {
             "success": True,
             "recommendations": result.get("recommendations", []),
-            "reasoning": result.get("reasoning"),
+            "options": result.get("options", []),
+            "summary": result.get("summary"),
+            "tips": result.get("tips", []),
+            "equipment_analysis": result.get("equipment_analysis", ""),
+            "equipment_type": result.get("equipment_type", "Equipment"),
             "available_slots": result.get("available_slots", []),
             "extracted_specs": result.get("extracted_specs", {}),
             "filter_info": result.get("filter_info", {}),
             "usage": {
-                "input_tokens": result.get("input_tokens", 0),
-                "output_tokens": result.get("output_tokens", 0),
+                "input_tokens": result.get("tokens", {}).get("input", 0),
+                "output_tokens": result.get("tokens", {}).get("output", 0),
             },
         }
 

@@ -501,6 +501,16 @@ def get_or_create_registration_settings(db: Session):
                 db.execute(text("ALTER TABLE registration_settings ADD COLUMN allow_domain_registration INTEGER DEFAULT 1"))
                 db.execute(text("ALTER TABLE registration_settings ADD COLUMN allow_email_registration INTEGER DEFAULT 0"))
                 db.commit()
+
+                # Migrate data from old schema
+                db.execute(text("""
+                    UPDATE registration_settings
+                    SET allow_email_registration = CASE
+                        WHEN registration_mode = 'restricted' THEN 1
+                        ELSE 0
+                    END
+                """))
+                db.commit()
             except Exception:
                 db.rollback()
 

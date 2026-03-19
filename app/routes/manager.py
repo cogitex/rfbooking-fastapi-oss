@@ -21,7 +21,7 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
 from app.middleware.auth import require_manager, check_equipment_manager
@@ -91,7 +91,7 @@ async def list_equipment_bookings(
             detail="Equipment not found",
         )
 
-    query = db.query(Booking).filter(Booking.equipment_id == equipment_id)
+    query = db.query(Booking).options(joinedload(Booking.user), joinedload(Booking.equipment)).filter(Booking.equipment_id == equipment_id)
 
     if start_date:
         query = query.filter(Booking.end_date >= start_date)
@@ -119,7 +119,7 @@ async def update_booking(
     current_user: User = Depends(require_manager),
 ):
     """Update booking on managed equipment."""
-    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    booking = db.query(Booking).options(joinedload(Booking.user), joinedload(Booking.equipment)).filter(Booking.id == booking_id).first()
     if not booking:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -164,7 +164,7 @@ async def cancel_booking(
     current_user: User = Depends(require_manager),
 ):
     """Cancel booking on managed equipment."""
-    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    booking = db.query(Booking).options(joinedload(Booking.user), joinedload(Booking.equipment)).filter(Booking.id == booking_id).first()
     if not booking:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

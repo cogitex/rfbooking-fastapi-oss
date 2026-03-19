@@ -72,9 +72,12 @@ def create_app() -> FastAPI:
     )
 
     # CORS middleware
+    # Since API and frontend are served from the same origin,
+    # CORS is primarily needed for dev tools / external integrations.
+    # In production, same-origin requests don't trigger CORS at all.
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"] if settings.app.debug else [settings.app.base_url],
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -125,4 +128,6 @@ if __name__ == "__main__":
         host=settings.app.host,
         port=settings.app.port,
         reload=settings.app.debug,
+        proxy_headers=True,
+        forwarded_allow_ips="*",
     )

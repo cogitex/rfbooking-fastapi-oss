@@ -34,10 +34,30 @@ from app.models.user import User
 from app.models.equipment import EquipmentType, EquipmentTypeUser
 from app.utils.helpers import generate_token, is_valid_email
 
+
+def get_base_url_from_request(request: Request) -> str:
+    """Derive the external base URL from the incoming request.
+
+    Respects X-Forwarded-Proto/Host headers when behind a reverse proxy.
+    Falls back to config base_url if explicitly set.
+    """
+    settings = get_settings()
+
+    # If base_url is explicitly configured, use it as override
+    if settings.app.base_url:
+        return settings.app.base_url.rstrip("/")
+
+    # Derive from request (Starlette's base_url respects proxy headers)
+    return str(request.base_url).rstrip("/")
+
+
+from app.routes.admin import get_or_create_registration_settings
+
 router = APIRouter(prefix="/api/auth")
 
 # Templates for auth redirects
-templates = Jinja2Templates(directory="templates")
+settings = get_settings()
+templates = Jinja2Templates(directory="templates", auto_reload=settings.app.debug)
 
 
 class RegisterRequest(BaseModel):
@@ -91,29 +111,40 @@ async def register(
 
     # If user doesn't exist, check registration settings
     if not user:
-        reg_settings = db.query(RegistrationSettings).first()
+        # Get registration settings (creates if missing, handles schema migration)
+        reg_settings = get_or_create_registration_settings(db)
 
-        # Check if registration is restricted
-        if reg_settings and reg_settings.registration_mode == "restricted":
-            email_domain = email.split("@")[1].lower()
+        # Check if registration is restricted based on new schema
+        if reg_settings:
+            # Determine which restrictions apply
+            domain_disabled = not reg_settings.allow_domain_registration
+            has_domain_restrictions = bool(reg_settings.allowed_domains and reg_settings.allowed_domains.strip())
+            email_restricted = reg_settings.allow_email_registration
 
-            # Check allowed domains
-            domain_allowed = False
-            if reg_settings.allowed_domains:
-                allowed_domains = [d.strip().lower() for d in reg_settings.allowed_domains.split(",")]
-                domain_allowed = email_domain in allowed_domains
+            is_restricted = domain_disabled or has_domain_restrictions or email_restricted
 
-            # Check specific email allowlist
-            email_allowed = db.query(AllowedEmail).filter(AllowedEmail.email == email).first() is not None
+            if is_restricted:
+                email_domain = email.split("@")[1].lower()
 
-            # Also allow the configured admin email
-            is_admin_email = email.lower() == settings.admin.email.lower()
+                # Check allowed domains
+                domain_allowed = False
+                if reg_settings.allowed_domains and reg_settings.allow_domain_registration:
+                    allowed_domains = [d.strip().lower() for d in reg_settings.allowed_domains.split(",")]
+                    domain_allowed = email_domain in allowed_domains
 
-            if not domain_allowed and not email_allowed and not is_admin_email:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Registration is restricted. Your email is not in the allowlist.",
-                )
+                # Check specific email allowlist
+                email_allowed = False
+                if reg_settings.allow_email_registration:
+                    email_allowed = db.query(AllowedEmail).filter(AllowedEmail.email == email).first() is not None
+
+                # Also allow the configured admin email
+                is_admin_email = email.lower() == settings.admin.email.lower()
+
+                if not domain_allowed and not email_allowed and not is_admin_email:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Registration is restricted. Your email is not in the allowlist.",
+                    )
 
     if user and not user.is_active:
         raise HTTPException(
@@ -140,15 +171,16 @@ async def register(
     db.add(magic_link)
     db.commit()
 
-    # Build verification URL
-    verify_url = f"{settings.app.base_url}/api/auth/verify?token={token}"
+    # Build verification URL from the request origin
+    base_url = get_base_url_from_request(request)
+    verify_url = f"{base_url}/api/auth/verify?token={token}"
 
     # Send magic link email
     from app.services.email import get_email_service
 
     email_service = get_email_service()
     try:
-        await email_service.send_magic_link(email, token, name)
+        await email_service.send_magic_link(email, token, name, base_url=base_url)
         return RegisterResponse(
             success=True,
             message=f"Magic link sent to {email}. Check your inbox.",
@@ -174,6 +206,9 @@ async def verify_magic_link(
 ):
     """Verify magic link and create session."""
     settings = get_settings()
+    # Derive cookie_secure from actual request scheme, not config
+    request_scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
+    cookie_secure = False if settings.app.debug else request_scheme == "https"
 
     # Find magic link
     magic_link = db.query(MagicLink).filter(MagicLink.token == token).first()
@@ -208,7 +243,7 @@ async def verify_magic_link(
                         key="auth_token",
                         value=existing_token.token,
                         httponly=True,
-                        secure=not settings.app.debug,
+                        secure=cookie_secure,
                         samesite="lax",
                         max_age=settings.security.auth_token_days * 24 * 60 * 60,
                     )
@@ -217,7 +252,7 @@ async def verify_magic_link(
                         key="csrf_token",
                         value=csrf_token,
                         httponly=False,
-                        secure=not settings.app.debug,
+                        secure=cookie_secure,
                         samesite="lax",
                         max_age=settings.security.auth_token_days * 24 * 60 * 60,
                     )
@@ -308,7 +343,7 @@ async def verify_magic_link(
         key="auth_token",
         value=auth_token.token,
         httponly=True,
-        secure=not settings.app.debug,
+        secure=cookie_secure,
         samesite="lax",
         max_age=settings.security.auth_token_days * 24 * 60 * 60,
     )
@@ -319,7 +354,7 @@ async def verify_magic_link(
         key="csrf_token",
         value=csrf_token,
         httponly=False,  # JavaScript needs to read this
-        secure=not settings.app.debug,
+        secure=cookie_secure,
         samesite="lax",
         max_age=settings.security.auth_token_days * 24 * 60 * 60,
     )
@@ -360,6 +395,42 @@ async def get_current_user_info(
         "success": True,
         "user": current_user.to_dict(),
     }
+
+
+@router.patch("/notification-preferences")
+async def update_notification_preferences(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Update user's email notification preferences."""
+    try:
+        data = await request.json()
+        email_notifications_enabled = data.get("email_notifications_enabled")
+
+        # Validate input
+        if not isinstance(email_notifications_enabled, bool):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid preference value. Must be true or false.",
+            )
+
+        # Update user's preference
+        current_user.email_notifications_enabled = email_notifications_enabled
+        db.commit()
+
+        return {
+            "success": True,
+            "message": "Notification preferences updated successfully",
+            "email_notifications_enabled": email_notifications_enabled,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500, detail="Failed to update notification preferences"
+        )
 
 
 @router.post("/logout")

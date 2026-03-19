@@ -85,7 +85,7 @@ def check_booking_conflicts(
 
     Returns list of conflicting bookings.
     """
-    query = db.query(Booking).filter(
+    query = db.query(Booking).options(joinedload(Booking.user)).filter(
         Booking.equipment_id == equipment_id,
         Booking.status == "active",
         # Date overlap check
@@ -159,7 +159,7 @@ async def get_booking(
     current_user: User = Depends(get_current_user),
 ):
     """Get booking details."""
-    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    booking = db.query(Booking).options(joinedload(Booking.user), joinedload(Booking.equipment)).filter(Booking.id == booking_id).first()
 
     if not booking:
         raise HTTPException(
@@ -294,17 +294,27 @@ async def create_booking(
     db.commit()
     db.refresh(booking)
 
-    # Queue notifications (if email enabled)
+    # Send notifications (matches Cloudflare implementation)
     from app.services.notifications import (
+        send_instant_booking_confirmation,
         queue_booking_notification,
         queue_manager_new_booking_notification,
     )
 
     try:
-        queue_booking_notification(db, booking, "created")
+        # 1. Send INSTANT confirmation email to user
+        await send_instant_booking_confirmation(db, booking)
+
+        # 2. Queue 24-hour reminder for user
+        queue_booking_notification(db, booking, "reminder")
+
+        # 3. Queue 24-hour reminders for managers (NOT instant notifications)
         queue_manager_new_booking_notification(db, booking)
+
+        # NOTE: Admins only get reminders for their own bookings (handled in queue_booking_notification)
     except Exception as e:
-        print(f"Failed to queue notification: {e}")
+        print(f"Failed to send/queue notifications: {e}")
+        # Don't fail the booking if notifications fail
 
     return {
         "success": True,
@@ -323,7 +333,7 @@ async def update_booking(
     """Update a booking."""
     settings = get_settings()
 
-    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    booking = db.query(Booking).options(joinedload(Booking.user), joinedload(Booking.equipment)).filter(Booking.id == booking_id).first()
 
     if not booking:
         raise HTTPException(
@@ -424,7 +434,7 @@ async def update_booking_description(
     """Update only booking description."""
     settings = get_settings()
 
-    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    booking = db.query(Booking).options(joinedload(Booking.user), joinedload(Booking.equipment)).filter(Booking.id == booking_id).first()
 
     if not booking:
         raise HTTPException(
@@ -465,7 +475,7 @@ async def cancel_booking(
     current_user: User = Depends(get_current_user),
 ):
     """Cancel a booking."""
-    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    booking = db.query(Booking).options(joinedload(Booking.user), joinedload(Booking.equipment)).filter(Booking.id == booking_id).first()
 
     if not booking:
         raise HTTPException(
@@ -496,17 +506,18 @@ async def cancel_booking(
     booking.status = "cancelled"
     db.commit()
 
-    # Queue cancellation notifications
-    from app.services.notifications import (
-        queue_booking_notification,
-        queue_short_notice_cancellation_alert,
-    )
+    # Send cancellation notifications (matches Cloudflare implementation)
+    from app.services.notifications import send_instant_cancellation_confirmation
 
     try:
-        queue_booking_notification(db, booking, "cancelled")
-        queue_short_notice_cancellation_alert(db, booking)
+        # Send INSTANT cancellation confirmation to user
+        await send_instant_cancellation_confirmation(db, booking)
+
+        # NOTE: Managers are NO LONGER notified of cancellations instantly
+        # They receive weekly digest emails instead (matches Cloudflare implementation)
     except Exception as e:
-        print(f"Failed to queue cancellation notification: {e}")
+        print(f"Failed to send cancellation notification: {e}")
+        # Don't fail the cancellation if notification fails
 
     return {
         "success": True,

@@ -31,7 +31,7 @@ class AppConfig(BaseModel):
     debug: bool = False
     host: str = "0.0.0.0"
     port: int = 8000
-    base_url: str = "http://localhost:8000"
+    base_url: str = ""  # Auto-detected from request; set explicitly to override (e.g. behind reverse proxy)
     demo_mode: bool = False  # Read-only demo instance
     setup_completed: bool = False  # Set to True after initial setup wizard
 

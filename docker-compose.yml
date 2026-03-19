@@ -26,12 +26,23 @@ services:
       - ${RFBOOKING_DATA:-./data}:/data
       - ${RFBOOKING_CONFIG_DIR:-./config}:/app/config
       - ollama-data:/root/.ollama
+      # Development: Mount application code for live reload (comment out for production)
+      - ./app:/app/app
+      - ./templates:/app/templates
+      - ./static:/app/static
     environment:
       - RFBOOKING_CONFIG=/app/config/config.yaml
     restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
+      interval: 120s
       timeout: 10s
       retries: 3
       start_period: 120s

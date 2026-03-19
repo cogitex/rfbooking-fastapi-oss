@@ -31,7 +31,8 @@ from app.models.user import User
 router = APIRouter()
 
 # Set up Jinja2 templates
-templates = Jinja2Templates(directory="templates")
+settings = get_settings()
+templates = Jinja2Templates(directory="templates", auto_reload=settings.app.debug)
 
 
 def get_template_context(request: Request, user: Optional[User] = None) -> dict:
@@ -177,7 +178,7 @@ async def setup_page(request: Request):
     context = {
         "request": request,
         "app_name": settings.app.name,
-        "base_url": settings.app.base_url,
+        "base_url": settings.app.base_url or str(request.base_url).rstrip("/"),
         "needs_setup": settings.needs_setup,
         "current_config": {
             "organization_name": settings.organization.name,

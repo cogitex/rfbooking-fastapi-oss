@@ -85,25 +85,20 @@ def queue_booking_notification(
     booking: Booking,
     notification_type: str,
 ) -> None:
-    """Queue a booking notification.
+    """Queue a booking notification (for reminders, not instant confirmations).
 
     Args:
         db: Database session
         booking: Booking object
-        notification_type: 'created', 'cancelled', 'reminder'
+        notification_type: 'reminder' only (confirmations are sent instantly)
     """
+    settings = get_settings()
     user = booking.user
     if not user or not user.email_notifications_enabled:
         return
 
-    # Determine scheduled time
-    if notification_type == "created":
-        scheduled_for = datetime.utcnow()
-        notif_type = "booking_confirmation_user"
-    elif notification_type == "cancelled":
-        scheduled_for = datetime.utcnow()
-        notif_type = "booking_cancellation"
-    elif notification_type == "reminder":
+    # Only handle reminders here - confirmations are sent instantly via separate functions
+    if notification_type == "reminder":
         # Schedule for reminder_hours before booking
         reminder_time = datetime.combine(
             booking.start_date, booking.start_time
@@ -138,6 +133,119 @@ def queue_booking_notification(
         status="pending",
     )
     db.add(notification)
+    db.commit()  # FIX: Commit to database
+
+
+async def send_instant_booking_confirmation(
+    db: Session,
+    booking: Booking,
+) -> None:
+    """Send instant booking confirmation email to user (matches Cloudflare implementation).
+
+    Args:
+        db: Database session
+        booking: Booking object
+    """
+    user = booking.user
+    if not user or not user.email_notifications_enabled:
+        return
+
+    email_service = get_email_service()
+    scheduled_for = datetime.utcnow()
+
+    # Create notification log entry
+    notification = NotificationLog(
+        notification_type="booking_confirmation_user",
+        recipient_user_id=user.id,
+        reference_id=booking.id,
+        reference_type="booking",
+        scheduled_for=scheduled_for,
+        status="pending",
+    )
+    db.add(notification)
+    db.commit()
+    db.refresh(notification)
+
+    # Send email immediately
+    try:
+        booking_data = booking.to_dict()
+        await email_service.send_booking_confirmation(
+            email=user.email,
+            name=user.name,
+            booking_data=booking_data,
+        )
+
+        # Mark as sent
+        notification.status = "sent"
+        notification.sent_at = datetime.utcnow()
+        db.commit()
+
+        print(f"[NOTIFICATIONS] Sent instant booking confirmation to {user.email}")
+    except Exception as e:
+        # Mark as failed
+        notification.status = "failed"
+        notification.error_message = str(e)
+        notification.send_attempts += 1
+        db.commit()
+
+        print(f"[NOTIFICATIONS] Failed to send instant confirmation to {user.email}: {e}")
+        raise
+
+
+async def send_instant_cancellation_confirmation(
+    db: Session,
+    booking: Booking,
+) -> None:
+    """Send instant cancellation confirmation email to user.
+
+    Args:
+        db: Database session
+        booking: Booking object
+    """
+    user = booking.user
+    if not user or not user.email_notifications_enabled:
+        return
+
+    email_service = get_email_service()
+    scheduled_for = datetime.utcnow()
+
+    # Create notification log entry
+    notification = NotificationLog(
+        notification_type="user_cancellation_confirmation",
+        recipient_user_id=user.id,
+        reference_id=booking.id,
+        reference_type="booking",
+        scheduled_for=scheduled_for,
+        status="pending",
+    )
+    db.add(notification)
+    db.commit()
+    db.refresh(notification)
+
+    # Send email immediately
+    try:
+        booking_data = booking.to_dict()
+        await email_service.send_booking_cancellation(
+            email=user.email,
+            name=user.name,
+            booking_data=booking_data,
+        )
+
+        # Mark as sent
+        notification.status = "sent"
+        notification.sent_at = datetime.utcnow()
+        db.commit()
+
+        print(f"[NOTIFICATIONS] Sent instant cancellation confirmation to {user.email}")
+    except Exception as e:
+        # Mark as failed
+        notification.status = "failed"
+        notification.error_message = str(e)
+        notification.send_attempts += 1
+        db.commit()
+
+        print(f"[NOTIFICATIONS] Failed to send instant cancellation confirmation to {user.email}: {e}")
+        raise
 
 
 async def process_pending_notifications(db: Session) -> dict:
@@ -214,25 +322,20 @@ async def process_pending_notifications(db: Session) -> dict:
                     name=user.name,
                     booking_data=booking_data,
                 )
-            elif notification.notification_type == "booking_cancellation":
+            elif notification.notification_type == "user_cancellation_confirmation":
                 await email_service.send_booking_cancellation(
                     email=user.email,
                     name=user.name,
                     booking_data=booking_data,
                 )
-            elif notification.notification_type == "manager_new_booking":
+            elif notification.notification_type == "manager_booking":
+                # Manager 24h reminder
                 await email_service.send_manager_new_booking(
                     email=user.email,
                     name=user.name,
                     booking_data=booking_data,
                     booker_name=booking.user.name if booking and booking.user else "Unknown",
-                )
-            elif notification.notification_type == "short_notice_cancellation":
-                await email_service.send_short_notice_cancellation(
-                    email=user.email,
-                    name=user.name,
-                    booking_data=booking_data,
-                    booker_name=booking.user.name if booking and booking.user else "Unknown",
+                    booker_email=booking.user.email if booking and booking.user else "",
                 )
             elif notification.notification_type == "calibration_reminder":
                 await email_service.send_calibration_reminder(
@@ -349,7 +452,10 @@ def queue_manager_new_booking_notification(
     db: Session,
     booking: Booking,
 ) -> int:
-    """Queue notifications to managers when a new booking is created.
+    """Queue 24-hour reminder notifications to managers (NOT instant notifications).
+
+    NOTE: Managers no longer receive instant notifications - they only get 24h reminders.
+    This matches the Cloudflare implementation behavior.
 
     Args:
         db: Database session
@@ -358,6 +464,7 @@ def queue_manager_new_booking_notification(
     Returns:
         Number of notifications queued.
     """
+    settings = get_settings()
     equipment = booking.equipment
     if not equipment:
         return 0
@@ -382,11 +489,11 @@ def queue_manager_new_booking_notification(
         .all()
     )
 
-    # Determine scheduled time based on working hours
-    if is_within_working_hours():
-        scheduled_for = datetime.utcnow()
-    else:
-        scheduled_for = get_next_working_hours_start()
+    # Schedule for 24 hours before booking (reminder, not instant notification)
+    reminder_time = datetime.combine(
+        booking.start_date, booking.start_time
+    ) - timedelta(hours=settings.booking.reminder_hours)
+    scheduled_for = reminder_time
 
     queued = 0
     for manager in managers:
@@ -398,7 +505,7 @@ def queue_manager_new_booking_notification(
         existing = (
             db.query(NotificationLog)
             .filter(
-                NotificationLog.notification_type == "manager_new_booking",
+                NotificationLog.notification_type == "manager_booking",
                 NotificationLog.recipient_user_id == manager.id,
                 NotificationLog.reference_id == booking.id,
                 NotificationLog.reference_type == "booking",
@@ -408,7 +515,7 @@ def queue_manager_new_booking_notification(
 
         if not existing:
             notification = NotificationLog(
-                notification_type="manager_new_booking",
+                notification_type="manager_booking",
                 recipient_user_id=manager.id,
                 reference_id=booking.id,
                 reference_type="booking",

@@ -28,7 +28,46 @@ from app.config import get_settings
 from app.models.equipment import Equipment, AISpecificationRule
 from app.models.booking import Booking
 from app.models.user import User
+from app.services.ai_temporal import TemporalParser
+from app.services.ai_equipment import AIEquipmentFilter
 
+
+# AI Model Configuration (mapped from Cloudflare AI models)
+AI_MODELS = {
+    'LLAMA': {
+        'id': 'llama3.1:8b',  # Ollama model name
+        'name': 'Llama 3.1 8B Instruct',
+        'neurons_per_m_input': 4119,
+        'neurons_per_m_output': 34868,
+        'cost_per_m_input': 0.045,
+        'cost_per_m_output': 0.384
+    },
+    'GRANITE': {
+        'id': 'granite-4.0-h-micro',  # Not available in Ollama, placeholder
+        'name': 'IBM Granite 4.0 H Micro',
+        'neurons_per_m_input': 1542,
+        'neurons_per_m_output': 10158,
+        'cost_per_m_input': 0.017,
+        'cost_per_m_output': 0.11
+    }
+}
+
+# Default model selection (can be changed via environment variable)
+def get_selected_model():
+    """Get selected AI model based on configuration."""
+    settings = get_settings()
+    model_key = getattr(settings.ai, 'model_key', 'LLAMA')  # Default to LLAMA
+    return AI_MODELS.get(model_key, AI_MODELS['LLAMA'])
+
+FREE_TIER_DAILY_LIMIT = 10000  # Free tier: 10,000 neurons/day
+MAX_BOOKING_OPTIONS = 5  # Maximum options to present to user
+SEARCH_DAYS_AHEAD = 60  # How far ahead to search for availability
+DEFAULT_SEARCH_DAYS = 30  # Default search window for availability
+
+# Rate limiting (in-memory)
+RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000  # 5 minutes
+RATE_LIMIT_MAX_REQUESTS = 10  # Maximum requests per window
+_rate_limit_cache = {}  # user_id:window -> count
 
 # Equipment cache for reducing database queries
 _equipment_cache: Dict[str, Any] = {
@@ -36,6 +75,113 @@ _equipment_cache: Dict[str, Any] = {
     "timestamp": 0,
     "ttl": 4 * 60 * 60,  # 4 hours in seconds
 }
+
+def calculate_neurons(input_tokens, output_tokens, model):
+    """Calculate neurons used based on token counts and model."""
+    input_neurons = (input_tokens / 1000000) * model['neurons_per_m_input']
+    output_neurons = (output_tokens / 1000000) * model['neurons_per_m_output']
+    return int(input_neurons + output_neurons)
+
+def check_rate_limit(user_id, db):
+    """Check if user has exceeded rate limit. Admin users are exempt."""
+    # Check if user is admin
+    from app.models.user import User
+    user = db.query(User).filter(User.id == user_id).first()
+    if user and user.is_admin:
+        return {'allowed': True, 'isAdmin': True}
+
+    import time
+    now = int(time.time() * 1000)  # milliseconds
+    window_start = (now // RATE_LIMIT_WINDOW_MS) * RATE_LIMIT_WINDOW_MS
+    key = f'{user_id}:{window_start}'
+
+    current = _rate_limit_cache.get(key, 0)
+
+    if current >= RATE_LIMIT_MAX_REQUESTS:
+        retry_after = ((window_start + RATE_LIMIT_WINDOW_MS - now) // 1000) + 1
+        return {
+            'allowed': False,
+            'retry_after': retry_after,
+            'current': current,
+            'limit': RATE_LIMIT_MAX_REQUESTS
+        }
+
+    _rate_limit_cache[key] = current + 1
+
+    # Cleanup old windows to prevent memory leak
+    for k in list(_rate_limit_cache.keys()):
+        _, ws = k.split(':')
+        if int(ws) < window_start - RATE_LIMIT_WINDOW_MS:
+            del _rate_limit_cache[k]
+
+    return {
+        'allowed': True,
+        'remaining': RATE_LIMIT_MAX_REQUESTS - current - 1,
+        'isAdmin': False
+    }
+
+
+def get_today_usage(db, org_id=1):
+    """Get or create today's usage record."""
+    today = date.today().isoformat()
+
+    from app.models.equipment import AIUsage
+    usage = db.query(AIUsage).filter(AIUsage.date == today).first()
+
+    if not usage:
+        usage = AIUsage(date=today, queries_count=0, neurons_used=0, input_tokens=0, output_tokens=0)
+        db.add(usage)
+        db.commit()
+
+    return usage
+
+
+def update_usage(db, org_id, neurons_used, input_tokens, output_tokens):
+    """Update usage statistics."""
+    today = date.today().isoformat()
+
+    from app.models.equipment import AIUsage
+    from sqlalchemy import func
+
+    # Try to update existing record, or insert if not exists
+    # This is a simplified version - for production, use proper upsert
+    usage = db.query(AIUsage).filter(AIUsage.date == today).first()
+    if usage:
+        usage.neurons_used += neurons_used
+        usage.queries_count += 1
+        usage.input_tokens += input_tokens
+        usage.output_tokens += output_tokens
+    else:
+        usage = AIUsage(
+            date=today,
+            neurons_used=neurons_used,
+            queries_count=1,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens
+        )
+        db.add(usage)
+    db.commit()
+
+
+def log_query(db, org_id, user_id, prompt, response, input_tokens, output_tokens,
+              neurons_used, model, success, error_message=None):
+    """Log AI query for debugging and analytics."""
+    from app.models.equipment import AIQueryLog
+
+    query_log = AIQueryLog(
+        org_id=org_id,
+        user_id=user_id,
+        prompt=prompt,
+        response=response,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        neurons_used=neurons_used,
+        model=model,
+        success=success,
+        error_message=error_message
+    )
+    db.add(query_log)
+    db.commit()
 
 
 def invalidate_equipment_cache():
@@ -181,7 +327,7 @@ class AIService:
         """Lazy-load Ollama client."""
         if self._client is None:
             import ollama
-            self._client = ollama.Client(host=self.settings.ai.ollama_host)
+            self._client = ollama.Client(host=self.settings.ai.ollama_host, timeout=300)
         return self._client
 
     def get_cached_equipment(self, db: Session) -> Optional[List[Dict[str, Any]]]:
@@ -432,10 +578,14 @@ class AIService:
         prompt: str,
         equipment_list: List[Equipment],
         rules: List[AISpecificationRule],
-        preferred_start: Optional[date],
-        preferred_end: Optional[date],
+        date_constraints: Dict[str, Any],
         db: Session,
         user: User,
+        search_days: int = 30,
+        max_options: int = 5,
+        # Deprecated parameters (kept for backward compatibility)
+        preferred_start: Optional[date] = None,
+        preferred_end: Optional[date] = None,
     ) -> Dict[str, Any]:
         """Analyze booking request and return recommendations.
 
@@ -445,6 +595,20 @@ class AIService:
 
         Also includes availability checking for recommended equipment.
         """
+        # Extract date constraints
+        preferred_start = date_constraints.get('preferred_start') or preferred_start
+        preferred_end = date_constraints.get('preferred_end') or preferred_end
+        duration = date_constraints.get('duration')
+        flexibility = date_constraints.get('flexibility', 'any')
+        intent = date_constraints.get('intent', 'booking')
+        print(f'[AI Assistant] Date constraints: {date_constraints}')
+
+        # Calculate end date from start + duration if needed
+        if preferred_start and duration and not preferred_end:
+            from datetime import timedelta
+            preferred_end = preferred_start + timedelta(days=duration - 1)
+            print(f'[AI Assistant] Calculated end date: {preferred_end} from start {preferred_start}, duration {duration}')
+
         # Stage 1: Extract specifications from prompt
         extracted_specs = self.spec_extractor.extract_specs(prompt)
 
@@ -469,7 +633,22 @@ class AIService:
                     specs_parts.append(f"- {spec_type}: {spec['raw']}")
             specs_info = f"\n\nExtracted requirements:\n" + "\n".join(specs_parts)
 
-        user_prompt = f"""User request: {prompt}{specs_info}
+        # Add duration hint if available (like Core)
+        duration_hint = ""
+        if duration:
+            duration_hint = f"\n\nThe user needs equipment for {duration} working days."
+        elif preferred_start and preferred_end:
+            duration = (preferred_end - preferred_start).days + 1
+            duration_hint = f"\n\nThe user needs equipment for {duration} days."
+
+        # Add date constraint hint (like Core)
+        date_constraint_hint = ""
+        if preferred_start and preferred_end:
+            date_constraint_hint = f"\n\nDate preference: {preferred_start.isoformat()} to {preferred_end.isoformat()}."
+        elif preferred_start:
+            date_constraint_hint = f"\n\nStart date preference: {preferred_start.isoformat()}."
+
+        user_prompt = f"""User request: {prompt}{specs_info}{duration_hint}{date_constraint_hint}
 
 Available equipment (pre-filtered based on specifications):
 {equipment_context}
@@ -496,6 +675,18 @@ Respond with a JSON array of recommendations."""
         # Parse recommendations
         recommendations = self._parse_recommendations(response_text, filtered_equipment)
 
+        # Extract equipment type from recommendations
+        equipment_types = set()
+        for rec in recommendations:
+            eq_id = rec.get("equipment_id")
+            if eq_id:
+                # Find equipment in filtered list
+                eq = next((e for e in filtered_equipment if e.id == eq_id), None)
+                if eq and eq.equipment_type and eq.equipment_type.name:
+                    equipment_types.add(eq.equipment_type.name)
+
+        equipment_type = ", ".join(sorted(list(equipment_types))) if equipment_types else "Equipment"
+
         # Add availability info for each recommendation
         for rec in recommendations:
             eq_id = rec.get("equipment_id")
@@ -509,26 +700,166 @@ Respond with a JSON array of recommendations."""
                     # If not available, find alternative dates
                     if not rec["available"]:
                         rec["alternative_dates"] = self._find_alternative_dates(
-                            db, eq_id, preferred_start, preferred_end
+                            db, eq_id, preferred_start, preferred_end, search_days
                         )
 
                 # Always include available slots
                 rec["available_slots"] = self._find_available_slots(
-                    db, eq_id, preferred_start, preferred_end
+                    db, eq_id, preferred_start, preferred_end, search_days
                 )
+
+        # Flatten options for frontend and summary generation
+        options = self._generate_flattened_options(
+            recommendations,
+            preferred_start,
+            preferred_end,
+            date_constraints,
+            max_options
+        )
+
+        # Generate summary and tips
+        summary = self.generate_summary(options, search_days)
+        tips = self.generate_conversational_tips(options, date_constraints, search_days)
 
         # Estimate token usage
         input_tokens = len(system_prompt.split()) + len(user_prompt.split())
         output_tokens = len(response_text.split())
 
         return {
-            "recommendations": recommendations,
-            "reasoning": response_text,
+            "options": options,
+            "equipment_analysis": response_text,
+            "equipment_type": equipment_type,
+            "summary": summary,
+            "tips": tips,
             "extracted_specs": extracted_specs,
             "filter_info": filter_info,
-            "input_tokens": input_tokens * 2,  # Rough estimate
-            "output_tokens": output_tokens * 2,
+            "tokens": {
+                "input": input_tokens * 2,
+                "output": output_tokens * 2
+            },
+            "recommendations": recommendations,  # Deprecated: keep for backward compatibility
         }
+
+    def _generate_flattened_options(self, recommendations: List[Dict[str, Any]], preferred_start, preferred_end, date_constraints: Dict[str, Any], max_options: int = 10) -> List[Dict[str, Any]]:
+        """Flatten nested recommendations into a list of booking options."""
+        from datetime import date, timedelta
+        options = []
+        
+        for rec in recommendations:
+            # If exact match found (available for preferred dates)
+            if rec.get("available", False) and preferred_start and preferred_end:
+                options.append({
+                    "equipment_id": rec["equipment_id"],
+                    "equipment_name": rec["name"],
+                    "start_date": preferred_start.isoformat(),
+                    "end_date": preferred_end.isoformat(),
+                    "duration_days": (preferred_end - preferred_start).days + 1,
+                    "reason": rec.get("reasoning", ""),
+                    "exact_match": True
+                })
+            
+            # Add alternative dates if available
+            elif rec.get("alternative_dates"):
+                for alt in rec["alternative_dates"]:
+                    options.append({
+                        "equipment_id": rec["equipment_id"],
+                        "equipment_name": rec["name"],
+                        "start_date": alt["start_date"],
+                        "end_date": alt["end_date"],
+                        "duration_days": (date.fromisoformat(alt["end_date"]) - date.fromisoformat(alt["start_date"])).days + 1,
+                        "reason": rec.get("reasoning", ""),
+                        "nearest_alternative": True,
+                        "requested_date": preferred_start.isoformat() if preferred_start else None
+                    })
+            
+            # Add general available slots if no specific preference or no match yet
+            elif rec.get("available_slots"):
+                # Limit to 3 slots per equipment to avoid clutter
+                for slot in rec["available_slots"][:3]:
+                    # Calculate slot duration
+                    slot_start = date.fromisoformat(slot["start_date"])
+                    slot_end = date.fromisoformat(slot["end_date"])
+                    slot_duration = (slot_end - slot_start).days + 1
+
+                    # Check if we have a requested duration from date constraints
+                    requested_duration = date_constraints.get('duration')
+
+                    if requested_duration and slot_duration >= requested_duration:
+                        # Create option of requested duration (use earliest part of slot)
+                        option_end = slot_start + timedelta(days=requested_duration - 1)
+                        options.append({
+                            "equipment_id": rec["equipment_id"],
+                            "equipment_name": rec["name"],
+                            "start_date": slot_start.isoformat(),
+                            "end_date": option_end.isoformat(),
+                            "duration_days": requested_duration,
+                            "reason": rec.get("reasoning", "") + f" (showing {requested_duration}-day slot within available period)"
+                        })
+                    else:
+                        # Use full slot (or skip if slot too short for requested duration)
+                        if not requested_duration or slot_duration >= requested_duration:
+                            options.append({
+                                "equipment_id": rec["equipment_id"],
+                                "equipment_name": rec["name"],
+                                "start_date": slot["start_date"],
+                                "end_date": slot["end_date"],
+                                "duration_days": slot_duration,
+                                "reason": rec.get("reasoning", "")
+                            })
+
+        return options[:max_options] # Limit total options
+
+    def generate_summary(self, results: List[Dict[str, Any]], search_days: int) -> str:
+        """Generate a human-friendly summary of the results."""
+        total_options = len(results)
+        equipment_ids = {r["equipment_id"] for r in results if "equipment_id" in r}
+        equipment_names = {r["equipment_name"] for r in results if "equipment_name" in r}
+        nearest_alternatives = any(r.get("nearest_alternative") for r in results)
+
+        if total_options == 0:
+            return f"No available slots found in the next {search_days} days. Try extending your search window or selecting different equipment."
+
+        # Handle nearest alternatives case
+        if nearest_alternatives and results[0].get("requested_date"):
+            requested_date = results[0]["requested_date"] 
+            
+            if len(equipment_ids) == 1:
+                return f"Your requested date ({requested_date}) is booked. Showing {total_options} nearest available alternative{'s' if total_options > 1 else ''} for {list(equipment_names)[0]}."
+            
+            return f"Your requested date ({requested_date}) is booked. Showing {total_options} nearest available alternative{'s' if total_options > 1 else ''} across {len(equipment_ids)} equipment item{'s' if len(equipment_ids) > 1 else ''}."
+
+        if len(equipment_ids) == 1:
+            return f"Found {list(equipment_names)[0]} with {total_options} available time slot{'s' if total_options > 1 else ''} in the next {search_days} days."
+
+        if total_options <= 3:
+            return f"Found {total_options} available booking option{'s' if total_options > 1 else ''} across {len(equipment_ids)} equipment item{'s' if len(equipment_ids) > 1 else ''}."
+
+        return f"Great news! Found {total_options} available slots across {len(equipment_ids)} equipment items. Showing the soonest available dates."
+
+    def generate_conversational_tips(self, results: List[Dict[str, Any]], date_constraints: Dict[str, Any], search_days: int) -> List[str]:
+        """Generate helpful tips based on the results."""
+        tips = []
+        
+        # Check if showing nearest alternatives
+        has_nearest_alternatives = any(r.get("nearest_alternative") for r in results)
+
+        if has_nearest_alternatives:
+            tips.append("💡 Tip: Your preferred date was booked, but these are the closest available slots for the same equipment.")
+
+        if 0 < len(results) <= 2 and not has_nearest_alternatives:
+            tips.append("💡 Tip: This equipment is in high demand. Book soon to secure your preferred dates.")
+
+        if date_constraints.get("flexibility") == 'exact' and len(results) == 0:
+            tips.append("💡 Tip: Try being flexible with your dates - more slots may be available nearby.")
+
+        # Check duration (assuming duration_days is in result)
+        if any(r.get("duration_days", 0) > 7 for r in results):
+            tips.append("💡 Tip: Consider shorter booking periods if possible - this helps other researchers access equipment.")
+
+        if search_days < 30 and len(results) == 0:
+            tips.append(f"💡 Tip: Try searching further ahead - currently only searching {search_days} days.")
+
+        return tips
 
     def _find_alternative_dates(
         self,

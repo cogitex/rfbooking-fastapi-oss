@@ -5,191 +5,981 @@
 
 {% block title %}{{ app_name }} - Equipment Booking System{% endblock %}
 
-{% block body %}
-<div class="min-h-screen bg-gradient-to-br from-orange-600 to-orange-800">
-    <!-- Navigation -->
-    <nav class="container mx-auto px-6 py-4">
-        <div class="flex items-center justify-between">
-            <div class="text-white text-2xl font-bold">{{ app_name }}</div>
-            <a href="/login" class="bg-white text-orange-600 px-6 py-2 rounded-lg font-semibold hover:bg-orange-50 transition">
-                Sign In
-            </a>
-        </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <div class="container mx-auto px-6 py-20">
-        <div class="grid md:grid-cols-2 gap-12 items-center">
-            <div class="text-white">
-                <h1 class="text-5xl font-bold mb-6">Equipment Booking Made Simple</h1>
-                <p class="text-xl mb-8 text-orange-100">
-                    Self-hosted booking system with AI-powered equipment recommendations
-                </p>
-                <div class="flex space-x-4">
-                    <a href="/login" class="bg-white text-orange-600 px-8 py-3 rounded-lg font-semibold text-lg hover:bg-orange-50 transition">
-                        Get Started
-                    </a>
-                    <a href="/setup" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold text-lg hover:bg-white hover:text-orange-600 transition">
-                        Setup Guide
-                    </a>
-                </div>
-            </div>
-            <!-- Mobius Animation -->
-            <div class="flex justify-center">
-                <canvas id="mobius-canvas" width="400" height="400" class="max-w-full"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- Features Section -->
-    <div class="bg-white py-20">
-        <div class="container mx-auto px-6">
-            <h2 class="text-3xl font-bold text-center text-gray-800 mb-12">Features</h2>
-            <div class="grid md:grid-cols-3 gap-8">
-                <!-- Feature 1 -->
-                <div class="bg-gray-50 p-6 rounded-lg">
-                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">Easy Booking</h3>
-                    <p class="text-gray-600">Book equipment with a few clicks. View availability in real-time and avoid conflicts.</p>
-                </div>
-
-                <!-- Feature 2 -->
-                <div class="bg-gray-50 p-6 rounded-lg">
-                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">AI Assistant</h3>
-                    <p class="text-gray-600">Get intelligent equipment recommendations based on your technical requirements.</p>
-                </div>
-
-                <!-- Feature 3 -->
-                <div class="bg-gray-50 p-6 rounded-lg">
-                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">Self-Hosted</h3>
-                    <p class="text-gray-600">Your data stays on your servers. Full control with Docker deployment.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-8">
-        <div class="container mx-auto px-6 text-center">
-            <p class="mb-2">{{ app_name }} - Open Source Equipment Booking System</p>
-            <p class="text-gray-400 text-sm">
-                Licensed under AGPLv3 | &copy; 2025 Oleg Tokmakov
-            </p>
-        </div>
-    </footer>
-</div>
-
-<!-- Mobius Strip Animation -->
-<script>
-(function() {
-    const canvas = document.getElementById('mobius-canvas');
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
-    const centerX = width / 2;
-    const centerY = height / 2;
-
-    let rotation = 0;
-    const strips = 60;
-    const radius = 120;
-    const tubeRadius = 30;
-
-    function getMobiusPoint(u, v, rot) {
-        // Mobius strip parametric equations
-        const halfTwist = u / 2;
-        const x = (radius + v * Math.cos(halfTwist)) * Math.cos(u + rot);
-        const y = (radius + v * Math.cos(halfTwist)) * Math.sin(u + rot);
-        const z = v * Math.sin(halfTwist);
-        return { x, y, z };
+{% block head %}
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=2">
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
     }
 
-    function project(point) {
-        // Simple perspective projection
-        const scale = 300 / (300 + point.z);
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+        line-height: 1.6;
+        color: #2c3e50;
+        background: #fafbfc;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    /* Header */
+    header {
+        background: #ffffff;
+        padding: 20px 0;
+        border-bottom: 1px solid #e8eef7;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .logo {
+        font-size: 25px;
+        font-weight: 600;
+        color: #2c3e50;
+        text-decoration: none;
+        letter-spacing: -0.5px;
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+    }
+
+    .nav-links a {
+        text-decoration: none;
+        color: #5a6c7d;
+        font-size: 14px;
+        font-weight: 500;
+        transition: color 0.3s;
+    }
+
+    .nav-links a:hover {
+        color: #2c3e50;
+    }
+
+    .btn-primary {
+        background: #2c3e50;
+        color: white !important;
+        padding: 10px 20px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background 0.3s;
+    }
+
+    .btn-primary:hover {
+        background: #1a2633;
+        color: white !important;
+    }
+
+    .btn-secondary {
+        background: transparent;
+        color: #2c3e50;
+        padding: 10px 20px;
+        border: 1px solid #d4dce8;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+
+    .btn-secondary:hover {
+        border-color: #2c3e50;
+    }
+
+    /* Hero Section */
+    .hero {
+        padding: 120px 0;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        background: #f5f5f5;
+    }
+
+    .hero-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        opacity: 0.85;
+    }
+
+    #fractalCanvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    .hero .container {
+        position: relative;
+        z-index: 10;
+    }
+
+    .hero h1 {
+        font-size: 44px;
+        font-weight: 400;
+        margin-bottom: 24px;
+        color: #1a1a1a;
+        letter-spacing: -1px;
+        line-height: 1.2;
+    }
+
+    .hero .subtitle {
+        font-size: 22px;
+        color: #1a1a1a;
+        max-width: 640px;
+        margin: 0 auto 48px;
+        line-height: 1.4;
+    }
+
+    .hero-buttons {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-hero {
+        background: linear-gradient(135deg, rgba(44, 62, 80, 0.7) 0%, rgba(26, 38, 51, 0.7) 100%);
+        color: white !important;
+        padding: 16px 32px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 6px 18px rgba(44, 62, 80, 0.25);
+        display: inline-block;
+        text-align: center;
+    }
+
+    .btn-hero:hover {
+        background: linear-gradient(135deg, rgba(26, 38, 51, 0.8) 0%, rgba(13, 20, 25, 0.8) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(44, 62, 80, 0.35);
+        color: white !important;
+    }
+
+    .btn-hero:active {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(44, 62, 80, 0.3);
+    }
+
+    /* Features Grid */
+    .features {
+        padding: 100px 0;
+        background: #ffffff;
+    }
+
+    .features-header {
+        text-align: center;
+        margin-bottom: 80px;
+    }
+
+    .features-header h2 {
+        font-size: 36px;
+        font-weight: 300;
+        color: #1a1a1a;
+        margin-bottom: 16px;
+    }
+
+    .features-header p {
+        font-size: 16px;
+        color: #5a6c7d;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 32px;
+    }
+
+    .feature-card {
+        padding: 32px;
+        border-left: 2px solid #2c3e50;
+        transition: border-color 0.3s;
+    }
+
+    .feature-card:hover {
+        border-left-color: #5a6c7d;
+    }
+
+    .feature-card h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 12px;
+    }
+
+    .feature-card p {
+        font-size: 14px;
+        color: #5a6c7d;
+        line-height: 1.8;
+    }
+
+    /* Footer */
+    footer {
+        background: #f5f7fa;
+        padding: 60px 0 30px;
+        border-top: 1px solid #e8eef7;
+    }
+
+    .footer-content {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr;
+        gap: 40px;
+        margin-bottom: 40px;
+    }
+
+    .footer-section h4 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #2c3e50;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 20px;
+    }
+
+    .footer-section p {
+        color: #5a6c7d;
+        font-size: 14px;
+        line-height: 1.8;
+        margin-bottom: 12px;
+    }
+
+    .footer-section ul {
+        list-style: none;
+    }
+
+    .footer-section ul li {
+        margin-bottom: 10px;
+    }
+
+    .footer-section ul li a {
+        color: #5a6c7d;
+        text-decoration: none;
+        font-size: 14px;
+        transition: color 0.3s;
+    }
+
+    .footer-section ul li a:hover {
+        color: #2c3e50;
+    }
+
+    .footer-bottom {
+        border-top: 1px solid #e8eef7;
+        padding-top: 20px;
+        text-align: center;
+        color: #8894a6;
+        font-size: 12px;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 2000;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-dialog {
+        background: white;
+        border-radius: 8px;
+        padding: 48px;
+        max-width: 480px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+        animation: modalSlideIn 0.3s ease-out;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-dialog h2 {
+        color: #1a1a1a;
+        margin-bottom: 28px;
+        font-size: 24px;
+        font-weight: 400;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #2c3e50;
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #d4dce8;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+        font-family: inherit;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: #2c3e50;
+    }
+
+    .form-group input.error {
+        border-color: #dc3545;
+    }
+
+    .error-message {
+        color: #dc3545;
+        font-size: 13px;
+        margin-top: 6px;
+        display: none;
+    }
+
+    .error-message.show {
+        display: block;
+    }
+
+    .info-box {
+        background: #f5f7fa;
+        border-left: 3px solid #2c3e50;
+        border-radius: 4px;
+        padding: 16px;
+        margin: 20px 0;
+        font-size: 13px;
+    }
+
+    .info-box h4 {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        font-size: 13px;
+    }
+
+    .info-box p {
+        color: #5a6c7d;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    .info-box ul {
+        margin: 8px 0 0 0;
+        padding-left: 20px;
+        color: #5a6c7d;
+        line-height: 1.7;
+    }
+
+    .modal-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 32px;
+        justify-content: flex-end;
+    }
+
+    .btn-modal {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-modal-primary {
+        background: #2c3e50;
+        color: white;
+    }
+
+    .btn-modal-primary:hover {
+        background: #1a2633;
+    }
+
+    .btn-modal-secondary {
+        background: transparent;
+        color: #2c3e50;
+        border: 1px solid #d4dce8;
+    }
+
+    .btn-modal-secondary:hover {
+        border-color: #2c3e50;
+    }
+
+    .success-message {
+        color: #155724;
+        font-size: 14px;
+        margin-bottom: 20px;
+        padding: 12px;
+        background: #d4edda;
+        border-left: 3px solid #28a745;
+        border-radius: 4px;
+        display: none;
+    }
+
+    .success-message.show {
+        display: block;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 36px;
+        }
+
+        .hero .subtitle {
+            font-size: 18px;
+            line-height: 1.5;
+        }
+
+        .features-grid {
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        .footer-content {
+            grid-template-columns: 1fr;
+        }
+
+        nav {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+        }
+
+        .logo {
+            text-align: center;
+        }
+
+        .nav-links {
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .nav-links a[href="#features"] {
+            display: none;
+        }
+
+        .nav-links .btn-primary,
+        .nav-links .btn-secondary {
+            padding: 10px 28px;
+            min-width: 110px;
+            text-align: center;
+        }
+
+        .modal-dialog {
+            padding: 32px;
+        }
+
+        .hero-background {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<!-- Header -->
+<header>
+    <nav class="container">
+        <a href="/" class="logo">{{ app_name }}</a>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#" class="btn-secondary login-btn">Log in</a>
+            <a href="#" class="btn-primary join-now-btn">Register</a>
+        </div>
+    </nav>
+</header>
+
+<!-- Hero Section -->
+<section class="hero">
+    <!-- Animated 3D Fractal Background (Desktop Only) -->
+    <div class="hero-background">
+        <canvas id="fractalCanvas"></canvas>
+    </div>
+
+    <div class="container">
+        <h1>AI-Powered Equipment Booking for Engineering Teams</h1>
+        <p class="subtitle">Describe your needs in plain English, get instant equipment suggestions and book in seconds</p>
+        <div class="hero-buttons">
+            <a href="/login" class="btn-hero">Get Started</a>
+            <a href="/setup" class="btn-hero">Setup Guide</a>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="features" id="features">
+    <div class="container">
+        <div class="features-header">
+            <h2>Self-Hosted Scheduling Platform</h2>
+            <p>Set up {{ app_name }} to match how your team works. See all your resources in one place and control who has access to what.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <h3>Automated Scheduling</h3>
+                <p>Never worry about double bookings. The system checks availability in real-time and stops conflicts before they happen.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>Smart Notifications</h3>
+                <p>Everyone stays in the loop. Get automatic emails for bookings, reminders for managers, and alerts for maintenance.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>Usage Analytics</h3>
+                <p>See which equipment is most used and when. Simple reports help you understand what your team needs.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>Role-Based Access</h3>
+                <p>Give each person the right level of access. Admins manage everything, managers oversee their equipment, users make bookings.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>Maintenance Scheduling</h3>
+                <p>Block equipment when it needs maintenance or calibration. The system won't let anyone book it during that time.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>Local AI Engine</h3>
+                <p>AI recommendations run locally on your server using Ollama. Your technical requirements and equipment data never leave your infrastructure.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer id="contact">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>About</h4>
+                <p>{{ app_name }} is a self-hosted, open-source equipment booking system with AI-powered recommendations.</p>
+                <p style="margin-top: 12px;">Licensed under AGPLv3</p>
+            </div>
+            <div class="footer-section">
+                <h4>Product</h4>
+                <ul>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="/setup">Setup Guide</a></li>
+                    <li><a href="https://github.com/yourusername/rfbooking-fastapi-oss">GitHub</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Account</h4>
+                <ul>
+                    <li><a href="#" class="login-btn">Log In</a></li>
+                    <li><a href="#" class="join-now-btn">Create Account</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>Created by Oleg Tokmakov &middot; Open Source (AGPLv3) &middot; 2025</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Registration Modal -->
+<div id="registrationModal" class="modal-overlay">
+    <div class="modal-dialog">
+        <h2>Create Your Account</h2>
+        <div id="successMessage" class="success-message">
+            Check your email for a login link.
+        </div>
+        <form id="registrationForm">
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" name="fullName" placeholder="John Smith" required maxlength="100">
+                <div id="nameError" class="error-message"></div>
+            </div>
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="john@company.com" required maxlength="254">
+                <div id="emailError" class="error-message"></div>
+            </div>
+
+            <div class="info-box">
+                <h4>How it works:</h4>
+                <ul>
+                    <li>Use your company email to receive a secure login link</li>
+                    <li>Click the link to authenticate and access your dashboard</li>
+                    <li>An encrypted cookie will keep you logged in</li>
+                    <li>Request a new link anytime for different devices or browsers</li>
+                </ul>
+                <p style="margin-top: 12px; font-style: italic;">Passwordless 256-bit authentication</p>
+            </div>
+
+            <div class="modal-buttons">
+                <button type="button" class="btn-modal btn-modal-secondary" id="cancelBtn">Cancel</button>
+                <button type="submit" class="btn-modal btn-modal-primary">Send Login Link</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function() {
+    const modal = document.getElementById('registrationModal');
+    const registrationForm = document.getElementById('registrationForm');
+    const fullNameInput = document.getElementById('fullName');
+    const emailInput = document.getElementById('email');
+    const nameError = document.getElementById('nameError');
+    const emailError = document.getElementById('emailError');
+    const successMessage = document.getElementById('successMessage');
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    const joinButtons = document.querySelectorAll('.join-now-btn');
+    const loginButtons = document.querySelectorAll('.login-btn');
+
+    joinButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            openModal();
+        });
+    });
+
+    loginButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            openModal();
+        });
+    });
+
+    cancelBtn.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModal();
+    });
+
+    registrationForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        handleRegistration();
+    });
+
+    function openModal() {
+        modal.classList.add('active');
+        resetForm();
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+        resetForm();
+    }
+
+    function resetForm() {
+        registrationForm.reset();
+        nameError.classList.remove('show');
+        emailError.classList.remove('show');
+        successMessage.classList.remove('show');
+        fullNameInput.classList.remove('error');
+        emailInput.classList.remove('error');
+    }
+
+    function validateEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    async function handleRegistration() {
+        const fullName = fullNameInput.value.trim();
+        const email = emailInput.value.trim();
+        let hasError = false;
+
+        nameError.classList.remove('show');
+        emailError.classList.remove('show');
+        fullNameInput.classList.remove('error');
+        emailInput.classList.remove('error');
+
+        if (!fullName) {
+            nameError.textContent = 'Please enter your name';
+            nameError.classList.add('show');
+            fullNameInput.classList.add('error');
+            hasError = true;
+        }
+
+        if (!email) {
+            emailError.textContent = 'Please enter your email';
+            emailError.classList.add('show');
+            emailInput.classList.add('error');
+            hasError = true;
+        } else if (!validateEmail(email)) {
+            emailError.textContent = 'Please enter a valid email';
+            emailError.classList.add('show');
+            emailInput.classList.add('error');
+            hasError = true;
+        }
+
+        if (hasError) return;
+
+        const okBtn = registrationForm.querySelector('button[type="submit"]');
+        const originalButtonText = okBtn.textContent;
+        okBtn.textContent = 'Sending...';
+        okBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: fullName, email: email })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                successMessage.classList.add('show');
+                registrationForm.querySelectorAll('.form-group').forEach(group => {
+                    group.style.display = 'none';
+                });
+                registrationForm.querySelector('.modal-buttons').style.display = 'none';
+
+                setTimeout(() => {
+                    closeModal();
+                    registrationForm.querySelectorAll('.form-group').forEach(group => {
+                        group.style.display = 'block';
+                    });
+                    registrationForm.querySelector('.modal-buttons').style.display = 'flex';
+                }, 4000);
+            } else {
+                emailError.textContent = data.error || 'Registration failed';
+                emailError.classList.add('show');
+                emailInput.classList.add('error');
+            }
+        } catch (error) {
+            emailError.textContent = 'Network error. Please try again.';
+            emailError.classList.add('show');
+            emailInput.classList.add('error');
+        } finally {
+            okBtn.textContent = originalButtonText;
+            okBtn.disabled = false;
+        }
+    }
+})();
+
+// 3D Rotating Möbius Strip Animation (Desktop Only)
+if (window.innerWidth > 768) {
+    const canvas = document.getElementById('fractalCanvas');
+    const ctx = canvas.getContext('2d');
+    let animationId = null;
+    let time = 0;
+
+    function resizeCanvas() {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+    }
+
+    function generateMobiusStrip() {
+        const segments = 40;
+        const width = 15;
+        const points = [];
+        for (let u = 0; u <= segments; u++) {
+            for (let v = 0; v < width; v++) {
+                const uNorm = (u / segments) * Math.PI * 2;
+                const vNorm = (v / (width - 1)) - 0.5;
+
+                const r = 50 + vNorm * 30;
+                const x = r * Math.cos(uNorm) * Math.cos(uNorm / 2);
+                const y = r * Math.sin(uNorm) * Math.cos(uNorm / 2);
+                const z = vNorm * 60 * Math.sin(uNorm / 2);
+
+                points.push({ x, y, z, v: vNorm });
+            }
+        }
+
+        return { points, segments: segments + 1, width };
+    }
+
+    function rotateX(p, angle) {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
         return {
-            x: centerX + point.x * scale,
-            y: centerY + point.y * scale * 0.6,
-            z: point.z,
-            scale: scale
+            x: p.x,
+            y: p.y * cos - p.z * sin,
+            z: p.y * sin + p.z * cos,
+            v: p.v
         };
     }
 
-    function getColor(z, scale) {
-        // Orange/amber gradient based on depth
-        const brightness = Math.floor(150 + z * 0.5 + scale * 50);
-        const red = Math.min(255, Math.max(150, brightness + 60));
-        const green = Math.min(180, Math.max(80, brightness - 30));
-        const blue = Math.min(80, Math.max(20, brightness - 100));
-        return `rgb(${red}, ${green}, ${blue})`;
+    function rotateY(p, angle) {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return {
+            x: p.x * cos + p.z * sin,
+            y: p.y,
+            z: -p.x * sin + p.z * cos,
+            v: p.v
+        };
     }
 
-    function draw() {
-        ctx.clearRect(0, 0, width, height);
+    function rotateZ(p, angle) {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return {
+            x: p.x * cos - p.y * sin,
+            y: p.x * sin + p.y * cos,
+            z: p.z,
+            v: p.v
+        };
+    }
 
-        const segments = [];
+    function project(p, centerX, centerY, scale) {
+        const perspective = 500;
+        const z = p.z + perspective;
+        const factor = perspective / z;
+        return {
+            x: centerX + (p.x * factor * scale),
+            y: centerY + (p.y * factor * scale),
+            z: p.z,
+            v: p.v
+        };
+    }
 
-        // Generate strip segments
-        for (let i = 0; i < strips; i++) {
-            const u = (i / strips) * Math.PI * 2;
-            const uNext = ((i + 1) / strips) * Math.PI * 2;
+    function getColor(vNorm) {
+        const normalized = (vNorm + 0.5);
+        const hue = 120 + normalized * 40;
+        const saturation = 35 + normalized * 20;
+        const lightness = 35 + normalized * 15;
 
-            const points = [
-                getMobiusPoint(u, -tubeRadius, rotation),
-                getMobiusPoint(u, tubeRadius, rotation),
-                getMobiusPoint(uNext, tubeRadius, rotation),
-                getMobiusPoint(uNext, -tubeRadius, rotation)
-            ];
+        const c = (1 - Math.abs(2 * lightness / 100 - 1)) * saturation / 100;
+        const hPrime = hue / 60;
+        const x = c * (1 - Math.abs(hPrime % 2 - 1));
+        let r = 0, g = 0, b = 0;
 
-            const projected = points.map(project);
-            const avgZ = points.reduce((sum, p) => sum + p.z, 0) / 4;
-
-            segments.push({
-                points: projected,
-                z: avgZ,
-                scale: projected[0].scale
-            });
+        if (hPrime >= 0 && hPrime < 1) {
+            r = c; g = x; b = 0;
+        } else if (hPrime >= 1 && hPrime < 2) {
+            r = x; g = c; b = 0;
+        } else if (hPrime >= 2 && hPrime < 3) {
+            r = 0; g = c; b = x;
+        } else if (hPrime >= 3 && hPrime < 4) {
+            r = 0; g = x; b = c;
+        } else if (hPrime >= 4 && hPrime < 5) {
+            r = x; g = 0; b = c;
+        } else {
+            r = c; g = 0; b = x;
         }
 
-        // Sort by depth (painter's algorithm)
-        segments.sort((a, b) => a.z - b.z);
+        const m = lightness / 100 - c / 2;
+        return {
+            r: Math.round((r + m) * 255),
+            g: Math.round((g + m) * 255),
+            b: Math.round((b + m) * 255)
+        };
+    }
 
-        // Draw segments
-        for (const seg of segments) {
-            ctx.beginPath();
-            ctx.moveTo(seg.points[0].x, seg.points[0].y);
-            for (let i = 1; i < seg.points.length; i++) {
-                ctx.lineTo(seg.points[i].x, seg.points[i].y);
+    function drawMobiusStrip() {
+        const width = canvas.width;
+        const height = canvas.height;
+
+        ctx.fillStyle = '#f5f5f5';
+        ctx.fillRect(0, 0, width, height);
+
+        const mobius = generateMobiusStrip();
+        const points = mobius.points;
+        const segments = mobius.segments;
+        const segmentWidth = mobius.width;
+
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const baseScale = Math.min(width, height) * 0.08;
+
+        const rotX = time * 0.0005;
+        const rotY = time * 0.0008;
+        const rotZ = time * 0.0002;
+
+        const projectedPoints = points.map(p => {
+            let rotated = rotateX(p, rotX);
+            rotated = rotateY(rotated, rotY);
+            rotated = rotateZ(rotated, rotZ);
+            return project(rotated, centerX, centerY, baseScale);
+        });
+
+        const triangles = [];
+        for (let u = 0; u < segments - 1; u++) {
+            for (let v = 0; v < segmentWidth - 1; v++) {
+                const i0 = u * segmentWidth + v;
+                const i1 = u * segmentWidth + (v + 1);
+                const i2 = (u + 1) * segmentWidth + v;
+                const i3 = (u + 1) * segmentWidth + (v + 1);
+
+                const avgZ = (projectedPoints[i0].z + projectedPoints[i1].z + projectedPoints[i2].z) / 3;
+                triangles.push({ indices: [i0, i1, i2], z: avgZ, color: getColor(points[i0].v) });
+
+                const avgZ2 = (projectedPoints[i1].z + projectedPoints[i2].z + projectedPoints[i3].z) / 3;
+                triangles.push({ indices: [i1, i2, i3], z: avgZ2, color: getColor(points[i1].v) });
             }
-            ctx.closePath();
+        }
 
-            ctx.fillStyle = getColor(seg.z, seg.scale);
+        triangles.sort((a, b) => a.z - b.z);
+
+        triangles.forEach(tri => {
+            const p0 = projectedPoints[tri.indices[0]];
+            const p1 = projectedPoints[tri.indices[1]];
+            const p2 = projectedPoints[tri.indices[2]];
+
+            ctx.fillStyle = `rgba(${tri.color.r}, ${tri.color.g}, ${tri.color.b}, 0.6)`;
+            ctx.beginPath();
+            ctx.moveTo(p0.x, p0.y);
+            ctx.lineTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.closePath();
             ctx.fill();
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+
+            ctx.strokeStyle = `rgba(0, 0, 0, 0.05)`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
-        }
-
-        rotation += 0.008;
-        requestAnimationFrame(draw);
+        });
     }
 
-    draw();
-})();
+    function animate() {
+        drawMobiusStrip();
+        time++;
+        animationId = requestAnimationFrame(animate);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+
+    resizeCanvas();
+    animate();
+}
 </script>
 {% endblock %}
