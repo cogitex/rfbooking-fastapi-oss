@@ -2,6 +2,11 @@
 /* Copyright (C) 2025 Oleg Tokmakov */
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
+/* Tailwind v2 missing utilities */
+.min-h-16 {
+    min-height: 4rem;
+}
+
 /* ============================================================================
    CSS VARIABLES - Charcoal Theme (aligned with rfbooking-core)
    ============================================================================ */
@@ -329,11 +334,9 @@ tbody td {
 
 /* Card Type Accents (aligned with rfbooking-core) */
 .card-info {
-    border-left: 4px solid var(--accent-blue);
 }
 
 .card-booking {
-    border-left: 4px solid var(--accent-teal);
 }
 
 .card-reports {
@@ -345,11 +348,9 @@ tbody td {
 }
 
 .card-info {
-    border-left: 4px solid var(--accent-blue);
 }
 
 .card-booking {
-    border-left: 4px solid var(--accent-teal);
 }
 
 .card-users {
@@ -1157,14 +1158,14 @@ tbody td {
 }
 
 .sidebar-title {
-    color: var(--brand-400);
+    color: #ffa409;
     font-weight: 700;
     font-size: 1.25rem;
 }
 
 .sidebar-subtitle {
-    color: #ea580c;
-    font-size: 0.75rem;
+    color: #83d341;
+    font-size: 1.25rem;
     margin-top: 4px;
 }
 
@@ -1221,7 +1222,7 @@ tbody td {
 }
 
 .sidebar-link.active {
-    background-color: #c2410c;
+    background-color: #563a2e;
     color: #fff;
     font-weight: 600;
 }

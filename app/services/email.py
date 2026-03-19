@@ -16,11 +16,14 @@
 
 """Email service using Resend API or SMTP."""
 
+import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Optional, Dict, Any
 
 from app.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 class EmailService:
@@ -77,10 +80,11 @@ class EmailService:
                 password=email_config.smtp_password or None,
                 start_tls=email_config.smtp_use_tls,
                 use_tls=email_config.smtp_use_ssl,
+                timeout=30,
             )
             return {"success": True, "provider": "smtp"}
         except Exception as e:
-            print(f"[SMTP ERROR] Failed to send email to {to}: {e}")
+            logger.error(f"SMTP: Failed to send email to {to}: {e}")
             raise
 
     async def _send_via_resend(
@@ -133,6 +137,7 @@ class EmailService:
         email: str,
         token: str,
         name: str,
+        base_url: str = "",
     ) -> Dict[str, Any]:
         """Send magic link email for authentication.
 
@@ -140,11 +145,14 @@ class EmailService:
             email: Recipient email address
             token: Magic link token
             name: User's name
+            base_url: Base URL derived from the incoming request
 
         Returns:
             Response from email provider
         """
-        verify_url = f"{self.settings.app.base_url}/api/auth/verify?token={token}"
+        if not base_url:
+            base_url = self.settings.app.base_url or "http://localhost:8000"
+        verify_url = f"{base_url}/api/auth/verify?token={token}"
         org_name = self.settings.organization.name
 
         html = f"""
@@ -856,16 +864,21 @@ async def send_email_direct(
         msg["Subject"] = subject
         msg.attach(MIMEText(html_content, "html", "utf-8"))
 
-        await aiosmtplib.send(
-            msg,
-            hostname=config.smtp_host,
-            port=config.smtp_port,
-            username=config.smtp_username or None,
-            password=config.smtp_password or None,
-            start_tls=config.smtp_use_tls,
-            use_tls=config.smtp_use_ssl,
-        )
-        return True
+        try:
+            await aiosmtplib.send(
+                msg,
+                hostname=config.smtp_host,
+                port=config.smtp_port,
+                username=config.smtp_username or None,
+                password=config.smtp_password or None,
+                start_tls=config.smtp_use_tls,
+                use_tls=config.smtp_use_ssl,
+                timeout=30,
+            )
+            return True
+        except Exception as e:
+            logger.error(f"SMTP test: Failed to send to {to_email}: {e}")
+            raise
 
     elif config.provider.lower() == "resend":
         import resend
