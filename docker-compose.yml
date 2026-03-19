@@ -17,8 +17,7 @@
 
 services:
   rfbooking:
-    image: rfbooking-fastapi-oss:latest
-    build: .
+    image: olegtok/rfbooking:latest
     container_name: rfbooking
     ports:
       - "${RFBOOKING_PORT:-8000}:8000"
