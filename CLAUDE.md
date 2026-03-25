@@ -13,10 +13,10 @@ Self-hosted Equipment Booking System with AI Assistant.
 ```bash
 # 1. Create installation directory and download docker-compose.yml
 mkdir rfbooking && cd rfbooking
-curl -O https://raw.githubusercontent.com/yourrepo/rfbooking-fastapi-oss/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/cogitex/rfbooking-fastapi-oss/main/docker-compose.yml
 
 # 2. Start container (first run downloads AI model ~4.7GB)
-docker-compose up -d
+docker compose up -d
 
 # 3. Open browser - you'll be redirected to setup wizard
 open http://localhost:8000
@@ -26,7 +26,7 @@ open http://localhost:8000
 
 1. Create folder: `C:\rfbooking`
 2. Download `docker-compose.yml` to that folder
-3. Right-click → Open with Docker Desktop, or run `docker-compose up -d`
+3. Right-click → Open with Docker Desktop, or run `docker compose up -d`
 4. Open http://localhost:8000 - complete setup wizard
 
 ### Development
@@ -501,7 +501,7 @@ admin (role_id=1) > manager (role_id=2) > user (role_id=3)
 
 ### Single Command
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Architecture

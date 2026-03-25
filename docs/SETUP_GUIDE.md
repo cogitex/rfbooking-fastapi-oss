@@ -1,6 +1,7 @@
 # RFBooking Setup Guide
 
 Self-hosted Equipment Booking System with AI Assistant.
+Online Demo version - www.rfbooking.com
 
 ---
 
@@ -40,16 +41,6 @@ Self-hosted Equipment Booking System with AI Assistant.
    docker compose version
    ```
 
-### macOS
-
-1. Download [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/)
-2. Open the `.dmg` file and drag Docker to Applications
-3. Launch Docker from Applications and wait for it to start
-4. Open **Terminal** and verify:
-   ```
-   docker --version
-   docker compose version
-   ```
 
 ### Linux (Ubuntu/Debian)
 
@@ -100,7 +91,7 @@ This will:
 - Pull the image from Docker Hub (first time only)
 - Create named volumes for database, config, and AI model
 - Auto-generate a default config on first run
-- Start downloading the AI model (~4.7 GB) in the background
+- Start downloading the AI model (~4.7 GB) in the background (~5-10 min)
 
 ### Watch Startup Progress
 
@@ -124,7 +115,7 @@ Wait until you see:
 
 Open your browser and go to **http://localhost:8000**
 
-> **Note:** The first startup takes several minutes while the AI model downloads. Subsequent starts are much faster since the model is cached.
+> **Note:** The first startup takes several minutes while the AI model downloads. Subsequent starts are fast since the model is cached.
 
 ### With NVIDIA GPU (Optional)
 
@@ -209,7 +200,7 @@ Best for organizations with an existing mail server.
 
 #### Option B: Resend API
 
-Best for quick setup without managing an SMTP server. Free tier available at [resend.com](https://resend.com).
+Best for quick setup without managing an SMTP server. Free tier available at [resend.com](https://resend.com). Domain is needed.
 
 | Field | Description | Example |
 |-------|-------------|---------|
