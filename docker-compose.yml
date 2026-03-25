@@ -4,7 +4,7 @@
 #
 # INSTALLATION:
 # 1. Place this file in your installation directory (e.g., C:\rfbooking or ~/rfbooking)
-# 2. Run: docker-compose up -d
+# 2. Run: docker compose up -d
 # 3. Open: http://localhost:8000
 #
 # DATA LOCATIONS:
@@ -12,8 +12,14 @@
 # - Config:   ./config/config.yaml
 #
 # CUSTOM PATHS (optional):
-# Set environment variables before running docker-compose:
-#   RFBOOKING_DATA=/custom/path/data docker-compose up -d
+# Set environment variables before running docker compose:
+#   RFBOOKING_DATA=/custom/path/data docker compose up -d
+#
+# DEBUGGING WITH BIND MOUNTS (optional):
+# Uncomment the bind mounts below during local development if you want template,
+# static, or Python code changes to be picked up without rebuilding the image.
+# Keep them commented for normal installations, especially when this compose file
+# is downloaded into a clean directory.
 
 services:
   rfbooking:
@@ -25,10 +31,11 @@ services:
       - ${RFBOOKING_DATA:-./data}:/data
       - ${RFBOOKING_CONFIG_DIR:-./config}:/app/config
       - ollama-data:/root/.ollama
-      # Development: Mount application code for live reload (comment out for production)
-      - ./app:/app/app
-      - ./templates:/app/templates
-      - ./static:/app/static
+      # Optional local debugging bind mounts. Uncomment to avoid rebuilding the
+      # container after Python, template, or static asset changes.
+      # - ./app:/app/app
+      # - ./templates:/app/templates
+      # - ./static:/app/static
     environment:
       - RFBOOKING_CONFIG=/app/config/config.yaml
     restart: unless-stopped

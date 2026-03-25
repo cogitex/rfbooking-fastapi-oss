@@ -2,6 +2,8 @@
 
 RFBooking FastAPI OSS - Self-hosted Equipment Booking System
 
+> For first-time installation, start with [SETUP_GUIDE.md](SETUP_GUIDE.md). This document focuses on production deployment, hardening, and operations.
+
 ---
 
 ## Table of Contents
@@ -43,14 +45,14 @@ RFBooking FastAPI OSS - Self-hosted Equipment Booking System
 ### Step 1: Clone Repository
 
 ```bash
-git clone https://github.com/otokmakov/rfbooking-fastapi-oss.git
+git clone https://github.com/cogitex/rfbooking-fastapi-oss.git
 cd rfbooking-fastapi-oss
 ```
 
 ### Step 2: Configure
 
 ```bash
-# Create configuration
+# Create configuration (or let the setup wizard generate it on first start)
 cp config/config.example.yaml config/config.yaml
 
 # Edit configuration
@@ -61,8 +63,8 @@ nano config/config.yaml
 
 ```yaml
 app:
-  secret_key: "generate-a-random-32-char-string"  # REQUIRED: Change this!
   base_url: "https://booking.yourdomain.com"      # Your public URL
+  setup_completed: false                          # Keep false until setup is completed
 
 admin:
   email: "admin@yourdomain.com"                   # Admin email
@@ -72,8 +74,8 @@ organization:
   name: "Your Organization"
 
 email:
-  enabled: true                                    # Enable for production
-  api_key: "re_xxxxxxxxxxxx"                      # Resend API key
+  provider: "smtp"                                 # Or "resend"
+  api_key: "re_xxxxxxxxxxxx"                      # For Resend
   from_address: "booking@yourdomain.com"
 ```
 
@@ -87,14 +89,16 @@ chmod 755 data
 ### Step 4: Start Services
 
 ```bash
-# Build and start
-docker-compose up -d
+# Start
+docker compose up -d
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # First startup takes 5-10 minutes (downloading AI model)
 ```
+
+Complete the setup wizard at `http://localhost:8000/setup` after the container is up.
 
 ### Step 5: Verify
 
@@ -131,7 +135,7 @@ ollama pull llama3.1:8b
 
 ```bash
 # Clone repository
-git clone https://github.com/otokmakov/rfbooking-fastapi-oss.git
+git clone https://github.com/cogitex/rfbooking-fastapi-oss.git
 cd rfbooking-fastapi-oss
 
 # Create virtual environment
@@ -338,7 +342,7 @@ echo "Backup complete: rfbooking_$DATE.tar.gz"
 
 ```bash
 # Stop service
-docker-compose down
+docker compose down
 # OR: sudo systemctl stop rfbooking
 
 # Extract backup
@@ -349,7 +353,7 @@ cp rfbooking_20250101_020000.db /path/to/data/rfbooking.db
 cp config_20250101_020000.yaml /path/to/config/config.yaml
 
 # Start service
-docker-compose up -d
+docker compose up -d
 # OR: sudo systemctl start rfbooking
 ```
 
@@ -387,7 +391,7 @@ docker stats rfbooking
 
 ```bash
 # Docker logs
-docker-compose logs -f --tail=100
+docker compose logs -f --tail=100
 
 # Systemd logs
 journalctl -u rfbooking -f
@@ -424,9 +428,9 @@ cd /path/to/rfbooking-fastapi-oss
 git pull origin main
 
 # Rebuild and restart
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
+docker compose down
+docker compose build --no-cache
+docker compose up -d
 
 # Verify
 curl http://localhost:8000/health
@@ -486,7 +490,7 @@ ls -la /path/to/data/
 
 # Reset database (WARNING: deletes all data)
 rm /path/to/data/rfbooking.db
-docker-compose restart
+docker compose restart
 ```
 
 ### Email Not Sending
@@ -500,7 +504,7 @@ docker-compose restart
 
 ```bash
 # Restart to clear memory
-docker-compose restart
+docker compose restart
 
 # Consider limiting Ollama memory
 # Add to docker-compose.yml:
@@ -532,7 +536,7 @@ docker-compose restart
 
 ## Support
 
-- **Issues:** https://github.com/otokmakov/rfbooking-fastapi-oss/issues
+- **Issues:** https://github.com/cogitex/rfbooking-fastapi-oss/issues
 - **License:** AGPL-3.0-or-later
 
 Copyright (C) 2025 Oleg Tokmakov
