@@ -1,117 +1,71 @@
 # RFBooking FastAPI OSS
 
-Self-hosted Equipment Booking System with AI Assistant.
+Self-hosted equipment booking system with AI assistant for engineering teams and laboratories.
 
-**Copyright (C) 2025 Oleg Tokmakov** | Licensed under [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.html)
+**Copyright (C) 2025 Oleg Tokmakov** | Licensed under [AGPL-3.0-or-later](https://www.gnu.org/licenses/agpl-3.0.html)
+
+## Documentation
+
+- [Installation Guide](docs/SETUP_GUIDE.md) - most up-to-date installation instructions
+- [Production Deployment](docs/DEPLOYMENT.md) - reverse proxy, TLS, backup, monitoring
+- [Contributing](CONTRIBUTING.md)
+- [Security Policy](SECURITY.md)
+- [Changelog](CHANGELOG.md)
+- [Source Code](https://github.com/cogitex/rfbooking-fastapi-oss)
 
 ## Features
 
-- **Equipment Management** - Track and organize laboratory equipment
-- **Booking System** - Book equipment with conflict detection
-- **AI Assistant** - Get intelligent equipment recommendations (Ollama + Llama 3.1 8B)
-- **Role-Based Access** - Admin, Manager, and User roles
-- **Email Notifications** - Optional email via Resend API
-- **Self-Hosted** - Your data stays on your servers
+- Equipment inventory with types, managers, and calibration tracking
+- Booking workflow with conflict detection and role-based access
+- AI assistant powered by Ollama for equipment recommendations
+- Passwordless magic-link authentication
+- Email notifications for bookings, reminders, and reports
+- Self-hosted deployment with Docker and SQLite
 
-## Quick Start with Docker
+## Quick Start
+
+For most users, use the full [Installation Guide](docs/SETUP_GUIDE.md).
+
+### Docker Compose
 
 ```bash
-# Clone the repository
-git clone https://github.com/otokmakov/rfbooking-fastapi-oss.git
+mkdir rfbooking && cd rfbooking
+curl -O https://raw.githubusercontent.com/cogitex/rfbooking-fastapi-oss/main/docker-compose.yml
+docker compose up -d
+```
+
+Then open `http://localhost:8000` and complete the setup wizard.
+
+### From Repository
+
+```bash
+git clone https://github.com/cogitex/rfbooking-fastapi-oss.git
 cd rfbooking-fastapi-oss
-
-# Copy and edit configuration
-cp config/config.example.yaml config/config.yaml
-# Edit config/config.yaml with your settings
-
-# Start with Docker Compose
-docker-compose up -d
-
-# Access the application at http://localhost:8000
+docker compose up -d
 ```
 
-**Note:** On first startup, the container will download the Llama 3.1 8B model (~4.7GB).
+## First Start
 
-## Configuration
+- On the first launch the container creates the config and data directories automatically.
+- Open `http://localhost:8000` and finish the web-based setup wizard.
+- The default Ollama model is downloaded on first start, so the first boot can take several minutes.
 
-Edit `config/config.yaml`:
-
-```yaml
-# Application settings
-app:
-  name: "RFBooking"
-  secret_key: "your-secret-key-here"  # Change this!
-  base_url: "http://localhost:8000"
-
-# Admin user (created on first startup)
-admin:
-  email: "admin@example.com"
-  name: "Administrator"
-
-# Email (optional)
-email:
-  enabled: false  # Set to true and add API key to enable
-  api_key: "your-resend-api-key"
-
-# AI Assistant
-ai:
-  enabled: true
-  model: "llama3.1:8b"
-```
-
-## Development Setup
+## Development
 
 ```bash
-# Create virtual environment
+git clone https://github.com/cogitex/rfbooking-fastapi-oss.git
+cd rfbooking-fastapi-oss
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-
-# Copy config
 cp config/config.example.yaml config/config.yaml
-
-# Run development server
 python -m app.main
 ```
 
-## API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/auth/register` | POST | Request magic link |
-| `/api/auth/me` | GET | Get current user |
-| `/api/equipment` | GET/POST | List/create equipment |
-| `/api/bookings` | GET/POST | List/create bookings |
-| `/api/ai/analyze` | POST | AI equipment recommendations |
-| `/api/reports/booking-stats` | GET | Booking statistics |
-
-## Project Structure
-
-```
-rfbooking-fastapi-oss/
-├── app/
-│   ├── main.py          # FastAPI application
-│   ├── config.py        # Configuration
-│   ├── database.py      # SQLite setup
-│   ├── models/          # SQLAlchemy models
-│   ├── routes/          # API endpoints
-│   ├── services/        # Business logic
-│   └── middleware/      # Auth middleware
-├── templates/           # Jinja2 HTML templates
-├── static/              # CSS/JS files
-├── config/              # Configuration files
-├── Dockerfile
-└── docker-compose.yml
-```
+For local debugging with Docker, `docker-compose.yml` includes commented bind mounts for `./app`, `./templates`, and `./static`. Uncomment them when you want live code or template reloads without rebuilding the image.
 
 ## License
 
-This project is licensed under the **GNU Affero General Public License v3.0** (AGPL-3.0).
+RFBooking application code is licensed under **AGPL-3.0-or-later**.
 
-See [LICENSE](LICENSE) or https://www.gnu.org/licenses/agpl-3.0.html
-
-## Author
-
-**Oleg Tokmakov** - 2025
+See [LICENSE](LICENSE) for the full license text. Third-party components and AI models may have separate license terms.

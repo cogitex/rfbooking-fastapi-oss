@@ -10,7 +10,7 @@ Be respectful and constructive. We welcome contributors of all experience levels
 
 ### Reporting Bugs
 
-1. Check [existing issues](https://github.com/otokmakov/rfbooking-fastapi-oss/issues) first
+1. Check [existing issues](https://github.com/cogitex/rfbooking-fastapi-oss/issues) first
 2. Create a new issue with:
    - Clear title and description
    - Steps to reproduce

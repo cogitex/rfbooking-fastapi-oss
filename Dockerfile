@@ -58,7 +58,7 @@ LABEL org.opencontainers.image.title="RFBooking FastAPI OSS" \
       org.opencontainers.image.description="Self-hosted Equipment Booking System with AI Assistant" \
       org.opencontainers.image.authors="Oleg Tokmakov" \
       org.opencontainers.image.licenses="AGPL-3.0-or-later" \
-      org.opencontainers.image.source="https://github.com/otokmakov/rfbooking-fastapi-oss"
+      org.opencontainers.image.source="https://github.com/cogitex/rfbooking-fastapi-oss"
 
 # Run
 CMD ["/entrypoint.sh"]
